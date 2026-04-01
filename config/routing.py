@@ -1,6 +1,6 @@
-from django.urls import re_path
-from chat_app.consumers import ChatConsumer
+# config/routing.py
+from channels.routing import URLRouter
+from chat_app.routing import websocket_urlpatterns as chat_ws
 
-websocket_urlpatterns = [
-    re_path(r"ws/chat/(?P<room_name>\w+)/$", ChatConsumer.as_asgi()),
-]
+# Ici on pourrait combiner les routes de plusieurs apps
+websocket_urlpatterns = chat_ws

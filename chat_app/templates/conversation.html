@@ -2,32 +2,133 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Conversation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - {{ conversation_id }}</title>
+    <style>
+        /* --- DESIGN GLOBAL --- */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        
+        /* --- HEADER --- */
+        .chat-header { background: #0084ff; color: white; padding: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        
+        /* --- ZONE DE MESSAGES --- */
+        #chat-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+
+        /* --- BULLES DE MESSAGE --- */
+        .message { max-width: 70%; padding: 10px 15px; border-radius: 18px; font-size: 14px; line-height: 1.4; position: relative; word-wrap: break-word; }
+        
+        /* Message envoyé par moi */
+        .sent { align-self: flex-end; background-color: #0084ff; color: white; border-bottom-right-radius: 2px; }
+        
+        /* Message reçu */
+        .received { align-self: flex-start; background-color: #e4e6eb; color: #050505; border-bottom-left-radius: 2px; }
+
+        .sender-name { font-size: 10px; font-weight: bold; margin-bottom: 4px; display: block; opacity: 0.7; }
+
+        /* --- BARRE D'ENVOI --- */
+        .input-area { background: white; padding: 15px; display: flex; gap: 10px; border-top: 1px solid #ddd; }
+        input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 20px; outline: none; }
+        button { background: #0084ff; color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        button:hover:not(:disabled) { background: #0073e6; }
+    </style>
 </head>
 <body>
-    <h1>Conversation</h1>
-    <p id="conversation-id"></p>
-
-    <div>
-        <textarea id="chat-log" cols="100" rows="20" readonly></textarea>
+    <div class="chat-header">
+        <strong>Conversation</strong><br>
+        <small id="conversation-id"></small>
     </div>
 
-    <br>
+    <div id="chat-container">
+        <div id="history-data" style="display:none;">{{ history }}</div>
+    </div>
 
-    <input id="chat-message-input" type="text" placeholder="Votre message" size="80">
-    <button id="chat-message-submit">Envoyer</button>
+    <div class="input-area">
+        <input id="chat-message-input" type="text" placeholder="Écrivez votre message..." autocomplete="off">
+        <button id="chat-message-submit" disabled>Envoyer</button>
+    </div>
 
     <script>
+        // 1. Initialisation
         const conversationId = "{{ conversation_id }}";
         const params = new URLSearchParams(window.location.search);
-        const username = params.get("username");
+        const username = params.get("username") || "Anonyme";
+        const chatContainer = document.querySelector('#chat-container');
+        const submitBtn = document.querySelector('#chat-message-submit');
 
-        document.getElementById("conversation-id").textContent =
-            "Conversation ID : " + conversationId;
+        document.getElementById("conversation-id").textContent = "ID Session : " + conversationId;
 
-        // Plus tard :
-        // 1. charger les messages via API
-        // 2. envoyer les messages via WebSocket
+        // 2. Fonction de création des bulles
+        function addMessageBubble(sender, message) {
+            if (!message || message.trim() === "") return;
+            
+            const msgDiv = document.createElement('div');
+            const isMe = sender.trim() === username.trim();
+            
+            msgDiv.classList.add('message');
+            msgDiv.classList.add(isMe ? 'sent' : 'received');
+
+            msgDiv.innerHTML = `<span class="sender-name">${sender}</span>${message}`;
+            chatContainer.appendChild(msgDiv);
+            
+            // Scroll vers le bas
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // 3. Chargement de l'historique (UNE SEULE FOIS)
+        
+        const historyDataElem = document.getElementById('history-data');
+        const historyData = historyDataElem ? historyDataElem.textContent : "";
+        console.log("Chargement de l'historique...");
+        chatContainer.innerHTML = '';
+        if (historyData && historyData.trim() !== "") {
+            const lines = historyData.split('\n');
+            lines.forEach(line => {
+                if (line.includes(':')) {
+                    const firstColonIndex = line.indexOf(':');
+                    const s = line.substring(0, firstColonIndex).trim();
+                    const m = line.substring(firstColonIndex + 1).trim();
+                    if (s && m) addMessageBubble(s, m);
+                }
+            });
+        }
+
+        // 4. Gestion WebSocket
+        const chatSocket = new WebSocket('ws://' + window.location.host + '/ws/chat/' + conversationId + '/');
+
+        chatSocket.onopen = function() {
+            console.log("Connecté au serveur !");
+            submitBtn.disabled = false; // Activer le bouton une fois connecté
+        };
+
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            addMessageBubble(data.sender, (data.message || data.text));
+        };
+
+        chatSocket.onerror = (e) => console.error("Erreur WebSocket", e);
+        chatSocket.onclose = () => {
+            console.warn("Connexion fermée.");
+            submitBtn.disabled = true;
+        };
+
+        // 5. Actions d'envoi
+        submitBtn.onclick = function() {
+            const input = document.querySelector('#chat-message-input');
+            const message = input.value;
+            
+            if (chatSocket.readyState === WebSocket.OPEN && message.trim() !== "") {
+                chatSocket.send(JSON.stringify({
+                    'message': message,
+                    'sender': username
+                }));
+                input.value = '';
+            }
+        };
+
+        document.querySelector('#chat-message-input').onkeyup = (e) => {
+            if (e.keyCode === 13) submitBtn.click();
+        };
     </script>
 </body>
 </html>
