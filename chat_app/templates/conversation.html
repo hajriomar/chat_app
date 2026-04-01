@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Conversation</title>
+</head>
+<body>
+    <h1>Conversation</h1>
+    <p id="conversation-id"></p>
+
+    <div>
+        <textarea id="chat-log" cols="100" rows="20" readonly></textarea>
+    </div>
+
+    <br>
+
+    <input id="chat-message-input" type="text" placeholder="Votre message" size="80">
+    <button id="chat-message-submit">Envoyer</button>
+
+    <script>
+        const conversationId = "{{ conversation_id }}";
+        const params = new URLSearchParams(window.location.search);
+        const username = params.get("username");
+
+        document.getElementById("conversation-id").textContent =
+            "Conversation ID : " + conversationId;
+
+        // Plus tard :
+        // 1. charger les messages via API
+        // 2. envoyer les messages via WebSocket
+    </script>
+</body>
+</html>

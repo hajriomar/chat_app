@@ -1,0 +1,9 @@
+Django
+daphne
+channels
+channels-redis
+djangorestframework
+drf-spectacular
+pymongo
+redis
+dnspython

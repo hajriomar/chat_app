@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChatApp</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --accent: #0a84ff;
+  --accent-light: #e8f2ff;
+  --bg: #f5f6f8;
+  --white: #ffffff;
+  --text: #111827;
+  --sub: #6b7280;
+  --border: #e5e7eb;
+  --green: #22c55e;
+  --red: #ef4444;
+  --radius: 14px;
+  --nav-h: 62px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* NAVBAR */
+.navbar {
+  position: sticky; top: 0; z-index: 100;
+  height: var(--nav-h);
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 24px; gap: 12px;
+}
+.nav-logo { display: flex; align-items: center; gap: 9px; text-decoration: none; }
+.nav-logo-icon {
+  width: 34px; height: 34px; border-radius: 10px;
+  background: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; color: white; flex-shrink: 0;
+}
+.nav-logo-text { font-size: 17px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+.nav-spacer { flex: 1; }
+.nav-btn {
+  position: relative; width: 38px; height: 38px;
+  border-radius: 50%; border: none; background: var(--bg);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 18px; transition: background 0.15s; color: var(--text);
+}
+.nav-btn:hover { background: #e9eaec; }
+.nav-badge {
+  position: absolute; top: 3px; right: 3px;
+  min-width: 16px; height: 16px;
+  background: var(--red); color: white;
+  font-size: 10px; font-weight: 700;
+  border-radius: 20px; padding: 0 4px;
+  display: none; align-items: center; justify-content: center;
+  border: 2px solid var(--white);
+}
+.nav-sep { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
+.nav-user {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 10px 5px 6px; border-radius: 30px; background: var(--bg);
+}
+.nav-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--accent); color: white;
+  font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  text-transform: uppercase; flex-shrink: 0;
+}
+.nav-username {
+  font-size: 13px; font-weight: 600; color: var(--text);
+  max-width: 100px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.btn-logout {
+  border: none; background: none; color: var(--red);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  padding: 7px 14px; border-radius: 8px; transition: background 0.15s;
+}
+.btn-logout:hover { background: #fee2e2; }
+
+/* MAIN */
+.main { max-width: 720px; margin: 0 auto; padding: 28px 16px 60px; }
+
+/* SECTION TITLE */
+.section-title {
+  font-size: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  color: var(--sub); margin-bottom: 12px;
+}
+
+/* ONLINE FRIENDS STRIP */
+.friends-strip {
+  display: flex; gap: 18px; overflow-x: auto;
+  padding-bottom: 4px; scrollbar-width: none; margin-bottom: 28px;
+}
+.friends-strip::-webkit-scrollbar { display: none; }
+.friend-bubble {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  flex-shrink: 0; cursor: pointer; animation: fadeUp 0.3s ease both;
+}
+.friend-avatar-wrap { position: relative; }
+.friend-avatar {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: linear-gradient(135deg, #60a5fa, #818cf8);
+  color: white; font-size: 18px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  text-transform: uppercase; border: 2px solid var(--white);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: transform 0.15s;
+}
+.friend-bubble:hover .friend-avatar { transform: scale(1.07); }
+.friend-dot {
+  position: absolute; bottom: 1px; right: 1px;
+  width: 13px; height: 13px; background: var(--green);
+  border-radius: 50%; border: 2px solid var(--white);
+}
+.friend-name {
+  font-size: 11px; font-weight: 500; color: var(--sub);
+  max-width: 56px; text-align: center;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.friends-empty {
+  display: none; align-items: center; gap: 8px;
+  color: var(--sub); font-size: 13px; padding: 12px 0;
+}
+
+/* SEARCH */
+.search-wrap { position: relative; margin-bottom: 16px; }
+.search-icon {
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  font-size: 15px; color: var(--sub); pointer-events: none;
+}
+.search-input {
+  width: 100%; padding: 11px 16px 11px 40px;
+  border-radius: 12px; border: 1px solid var(--border);
+  background: var(--white); font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 14px; color: var(--text); outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.search-input::placeholder { color: #9ca3af; }
+.search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(10,132,255,0.12); }
+
+/* CONVERSATION LIST */
+.conv-list {
+  background: var(--white); border-radius: var(--radius);
+  border: 1px solid var(--border); overflow: hidden;
+}
+.conv-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 18px; border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background 0.12s;
+  text-decoration: none; color: inherit;
+  animation: fadeIn 0.25s ease both;
+}
+.conv-item:last-child { border-bottom: none; }
+.conv-item:hover { background: #f9fafb; }
+.conv-avatar {
+  width: 46px; height: 46px; border-radius: 50%;
+  color: white; font-size: 17px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  text-transform: uppercase; flex-shrink: 0;
+}
+.conv-info { flex: 1; min-width: 0; }
+.conv-name { font-size: 15px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.conv-preview { font-size: 13px; color: var(--sub); margin-top: 2px; }
+.conv-arrow { color: #d1d5db; font-size: 20px; flex-shrink: 0; }
+.conv-empty {
+  display: none; flex-direction: column; align-items: center;
+  justify-content: center; padding: 52px 16px; gap: 10px; color: var(--sub);
+}
+.conv-empty .empty-icon { font-size: 36px; opacity: 0.35; }
+.conv-empty p { font-size: 14px; }
+
+/* MODALS */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.2); backdrop-filter: blur(3px);
+  z-index: 200; align-items: flex-start; justify-content: flex-end;
+  padding-top: calc(var(--nav-h) + 4px); padding-right: 16px;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--white); border-radius: var(--radius);
+  border: 1px solid var(--border); width: 320px; max-height: 460px;
+  display: flex; flex-direction: column;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.13);
+  animation: popIn 0.18s ease both; overflow: hidden;
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 18px 14px; border-bottom: 1px solid var(--border);
+}
+.modal-title { font-size: 15px; font-weight: 700; }
+.modal-close {
+  width: 28px; height: 28px; border-radius: 50%; border: none;
+  background: var(--bg); cursor: pointer; font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--sub); transition: background 0.15s;
+}
+.modal-close:hover { background: #e5e7eb; color: var(--text); }
+.modal-body { overflow-y: auto; flex: 1; padding: 8px 0; }
+.modal-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 18px; transition: background 0.12s;
+  animation: fadeIn 0.2s ease both;
+}
+.modal-item:hover { background: #f9fafb; }
+.modal-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: linear-gradient(135deg, #a78bfa, #60a5fa);
+  color: white; font-size: 14px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  text-transform: uppercase; flex-shrink: 0;
+}
+.modal-name { font-size: 14px; font-weight: 500; flex: 1; }
+.btn-accept {
+  border: none; background: #dcfce7; color: #16a34a;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 12px; font-weight: 600; padding: 6px 12px;
+  border-radius: 8px; cursor: pointer; transition: background 0.15s; white-space: nowrap;
+}
+.btn-accept:hover { background: #bbf7d0; }
+.btn-inv {
+  border: none; background: var(--accent-light); color: var(--accent);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 12px; font-weight: 600; padding: 6px 12px;
+  border-radius: 8px; cursor: pointer; transition: background 0.15s; white-space: nowrap;
+}
+.btn-inv:hover { background: #bfdbfe; }
+.btn-inv:disabled { background: #f3f4f6; color: #9ca3af; cursor: default; }
+.modal-empty { padding: 32px 18px; text-align: center; color: var(--sub); font-size: 13px; display: none; }
+.modal-empty .ei { font-size: 26px; opacity: 0.35; display: block; margin-bottom: 6px; }
+.modal-footer { padding: 8px 18px 12px; font-size: 12px; color: var(--accent); font-weight: 500; min-height: 14px; border-top: 1px solid var(--border); }
+
+/* ANIMATIONS */
+@keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeIn  { from { opacity:0; } to { opacity:1; } }
+@keyframes popIn   { from { opacity:0; transform:scale(0.94) translateY(-8px); } to { opacity:1; transform:scale(1) translateY(0); } }
+
+@media (max-width: 600px) {
+  .navbar { padding: 0 14px; gap: 8px; }
+  .nav-username { display: none; }
+  .modal { width: calc(100vw - 24px); }
+  .modal-overlay { justify-content: center; padding-right: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="nav-logo">
+    <div class="nav-logo-icon">💬</div>
+    <span class="nav-logo-text">ChatApp</span>
+  </div>
+  <div class="nav-spacer"></div>
+
+  <button class="nav-btn" title="Invitations reçues" onclick="toggleModal('modal-requests')">
+    🔔
+    <span class="nav-badge" id="badge-requests">0</span>
+  </button>
+
+  <button class="nav-btn" title="Inviter des amis" onclick="toggleModal('modal-invite')">
+    🫂
+  </button>
+
+  <div class="nav-sep"></div>
+
+  <div class="nav-user">
+    <div class="nav-avatar" id="nav-letter">?</div>
+    <span class="nav-username" id="nav-name">...</span>
+  </div>
+  <button class="btn-logout" id="logout-btn">Déconnexion</button>
+</nav>
+
+<!-- MODAL invitations reçues -->
+<div class="modal-overlay" id="modal-requests" onclick="overlayClose(event,'modal-requests')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">🔔 Invitations reçues</span>
+      <button class="modal-close" onclick="closeModal('modal-requests')">✕</button>
+    </div>
+    <div class="modal-body">
+      <ul id="req-list" style="list-style:none;padding:0;"></ul>
+      <div class="modal-empty" id="no-req"><span class="ei">📭</span>Aucune invitation reçue</div>
+    </div>
+    <div class="modal-footer" id="msg-req"></div>
+  </div>
+</div>
+
+<!-- MODAL inviter des amis -->
+<div class="modal-overlay" id="modal-invite" onclick="overlayClose(event,'modal-invite')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">🫂 Inviter des amis</span>
+      <button class="modal-close" onclick="closeModal('modal-invite')">✕</button>
+    </div>
+    <div class="modal-body">
+      <ul id="avail-list" style="list-style:none;padding:0;"></ul>
+      <div class="modal-empty" id="no-avail"><span class="ei">🙌</span>Tous les utilisateurs sont déjà vos amis</div>
+    </div>
+    <div class="modal-footer" id="msg-inv"></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- Amis en ligne -->
+  <div style="animation:fadeUp .4s ease both;">
+    <div class="section-title">En ligne maintenant</div>
+    <div class="friends-strip" id="friends-strip"></div>
+    <div class="friends-empty" id="no-friends"><span>😴</span> Aucun ami connecté en ce moment</div>
+  </div>
+
+  <!-- Conversations -->
+  <div style="animation:fadeUp .4s ease .08s both;">
+    <div class="section-title">Messages</div>
+    <div class="search-wrap" style="margin-top:12px;">
+      <span class="search-icon">🔍</span>
+      <input type="text" class="search-input" id="search-input" placeholder="Rechercher une conversation…" oninput="filterConv()">
+    </div>
+    <div class="conv-list" id="conv-list"></div>
+  </div>
+
+</main>
+
+<script>
+  const params   = new URLSearchParams(window.location.search);
+  const username = params.get("username") || "Utilisateur";
+  let allConvs   = [];
+
+  document.getElementById("nav-name").textContent   = username;
+  document.getElementById("nav-letter").textContent = username.charAt(0).toUpperCase();
+
+  /* ─── MODALS ─── */
+  function toggleModal(id) {
+    const el = document.getElementById(id);
+    const open = el.classList.contains("open");
+    document.querySelectorAll(".modal-overlay").forEach(m => m.classList.remove("open"));
+    if (!open) {
+      el.classList.add("open");
+      if (id === "modal-requests") loadRequests();
+      if (id === "modal-invite")   loadAvailableUsers();
+    }
+  }
+  function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+  function overlayClose(e, id) { if (e.target === e.currentTarget) closeModal(id); }
+
+  /* ─── LOGOUT ─── */
+  document.getElementById("logout-btn").addEventListener("click", async () => {
+    try {
+      const r = await fetch("/api/logout/", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({username}) });
+      const d = await r.json();
+      if (r.ok) { alert(d.message||"Déconnexion réussie"); window.location.href="/"; }
+      else alert(d.error||"Erreur");
+    } catch { alert("Erreur serveur"); }
+  });
+
+  const ini = n => n ? n.charAt(0).toUpperCase() : "?";
+
+  /* ─── ONLINE FRIENDS ─── */
+  async function loadOnlineFriends() {
+    try {
+      const r = await fetch("/api/online-friends/?username="+encodeURIComponent(username));
+      const d = await r.json();
+      const strip = document.getElementById("friends-strip");
+      strip.innerHTML = "";
+      if (!d.online_friends?.length) { document.getElementById("no-friends").style.display="flex"; return; }
+      document.getElementById("no-friends").style.display="none";
+      const palettes = ["linear-gradient(135deg,#60a5fa,#818cf8)","linear-gradient(135deg,#f472b6,#fb923c)","linear-gradient(135deg,#34d399,#22d3ee)","linear-gradient(135deg,#a78bfa,#f472b6)","linear-gradient(135deg,#fb923c,#f43f5e)"];
+      d.online_friends.forEach((f,i) => {
+        const div = document.createElement("div");
+        div.className = "friend-bubble";
+        div.style.animationDelay = (i*.05)+"s";
+        div.innerHTML = `<div class="friend-avatar-wrap"><div class="friend-avatar" style="background:${palettes[i%palettes.length]}">${ini(f.username)}</div><div class="friend-dot"></div></div><span class="friend-name">${f.username}</span>`;
+        strip.appendChild(div);
+      });
+    } catch(e) { console.error(e); }
+  }
+
+  /* ─── CONVERSATIONS ─── */
+  async function loadConversations() {
+    try {
+      const r = await fetch("/api/conversations/?username="+encodeURIComponent(username));
+      const d = await r.json();
+      allConvs = d.conversations || [];
+      renderConvs(allConvs);
+    } catch(e) { console.error(e); }
+  }
+
+  const convPalettes = ["linear-gradient(135deg,#34d399,#3b82f6)","linear-gradient(135deg,#f472b6,#a78bfa)","linear-gradient(135deg,#fb923c,#f43f5e)","linear-gradient(135deg,#60a5fa,#818cf8)","linear-gradient(135deg,#4ade80,#22d3ee)"];
+
+  function renderConvs(list) {
+    const box = document.getElementById("conv-list");
+    box.innerHTML = "";
+    if (!list?.length) {
+      box.innerHTML = `<div class="conv-empty" style="display:flex;"><span class="empty-icon">💬</span><p>Aucune conversation pour le moment</p><p style="font-size:12px;margin-top:4px;">Invitez des amis pour commencer à discuter</p></div>`;
+      return;
+    }
+    list.forEach((c,i) => {
+      const a = document.createElement("a");
+      a.className = "conv-item";
+      a.href = "/chat/"+c.conversation_id+"/?username="+encodeURIComponent(username);
+      a.style.animationDelay = (i*.04)+"s";
+      a.innerHTML = `<div class="conv-avatar" style="background:${convPalettes[i%convPalettes.length]}">${ini(c.label)}</div><div class="conv-info"><div class="conv-name">${c.label}</div><div class="conv-preview">Appuyer pour ouvrir</div></div><span class="conv-arrow">›</span>`;
+      box.appendChild(a);
+    });
+  }
+
+  function filterConv() {
+    const q = document.getElementById("search-input").value.toLowerCase().trim();
+    renderConvs(q ? allConvs.filter(c=>c.label.toLowerCase().includes(q)) : allConvs);
+  }
+
+  /* ─── RECEIVED REQUESTS ─── */
+  async function loadRequests() {
+    try {
+      const r = await fetch("/api/received-requests/?username="+encodeURIComponent(username));
+      const d = await r.json();
+      const list = document.getElementById("req-list");
+      list.innerHTML = "";
+      document.getElementById("msg-req").textContent = "";
+      if (!d.requests?.length) {
+        document.getElementById("no-req").style.display = "block";
+        document.getElementById("badge-requests").style.display = "none";
+        return;
+      }
+      document.getElementById("no-req").style.display = "none";
+      const badge = document.getElementById("badge-requests");
+      badge.style.display = "flex"; badge.textContent = d.requests.length;
+      d.requests.forEach(u => {
+        const li = document.createElement("li");
+        li.className = "modal-item";
+        li.innerHTML = `<div class="modal-avatar">${ini(u.username)}</div><span class="modal-name">${u.username}</span><button class="btn-accept" onclick="acceptInv('${u.username}')">Accepter</button>`;
+        list.appendChild(li);
+      });
+    } catch(e) { console.error(e); }
+  }
+
+  async function acceptInv(sender) {
+    try {
+      const r = await fetch("/api/accept-friend-request/", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({current_username:username, sender_username:sender}) });
+      const d = await r.json();
+      document.getElementById("msg-req").textContent = d.message||d.error||"";
+      loadRequests(); loadOnlineFriends(); loadConversations();
+    } catch { document.getElementById("msg-req").textContent = "Erreur serveur"; }
+  }
+
+  /* ─── AVAILABLE USERS ─── */
+  async function loadAvailableUsers() {
+    try {
+      const r = await fetch("/api/available-users/?username="+encodeURIComponent(username));
+      const d = await r.json();
+      const list = document.getElementById("avail-list");
+      list.innerHTML = "";
+      document.getElementById("msg-inv").textContent = "";
+      if (!d.users?.length) { document.getElementById("no-avail").style.display="block"; return; }
+      document.getElementById("no-avail").style.display = "none";
+      d.users.forEach(u => {
+        const li = document.createElement("li");
+        li.className = "modal-item";
+        li.innerHTML = `<div class="modal-avatar">${ini(u.username)}</div><span class="modal-name">${u.username}</span><button class="btn-inv" id="ib-${u.username}" onclick="sendInv('${u.username}')">Inviter</button>`;
+        list.appendChild(li);
+      });
+    } catch(e) { console.error(e); }
+  }
+
+  async function sendInv(target) {
+    const btn = document.getElementById("ib-"+target);
+    if (btn) { btn.disabled=true; btn.textContent="Envoyé ✓"; }
+    try {
+      const r = await fetch("/api/send-friend-request/", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({sender_username:username, receiver_username:target}) });
+      const d = await r.json();
+      document.getElementById("msg-inv").textContent = d.message||d.error||"";
+    } catch { document.getElementById("msg-inv").textContent = "Erreur serveur"; }
+  }
+
+  /* ─── INIT ─── */
+  loadOnlineFriends();
+  loadConversations();
+  (async () => {
+    try {
+      const r = await fetch("/api/received-requests/?username="+encodeURIComponent(username));
+      const d = await r.json();
+      if (d.requests?.length) {
+        const b = document.getElementById("badge-requests");
+        b.style.display="flex"; b.textContent=d.requests.length;
+      }
+    } catch {}
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Inscription</title>
+</head>
+<body>
+    <h1>Créer un compte</h1>
+
+    <form id="register-form">
+        <div>
+            <label for="full_name">Nom complet :</label>
+            <input type="text" id="full_name" name="full_name" required>
+        </div>
+
+        <br>
+
+        <div>
+            <label for="email">Email :</label>
+            <input type="email" id="email" name="email" required>
+        </div>
+
+        <br>
+
+        <div>
+            <label for="username">Nom d'utilisateur :</label>
+            <input type="text" id="username" name="username" required>
+        </div>
+
+        <br>
+
+        <div>
+            <label for="password">Mot de passe :</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+
+        <br>
+
+        <button type="submit">S'inscrire</button>
+    </form>
+
+    <p id="message"></p>
+
+    <p>
+        Déjà un compte ?
+        <a href="/">Se connecter</a>
+    </p>
+
+    <script>
+        document.getElementById("register-form").addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            const full_name = document.getElementById("full_name").value;
+            const email = document.getElementById("email").value;
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+            const message = document.getElementById("message");
+
+            try {
+                const response = await fetch("/api/register/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        full_name: full_name,
+                        email: email,
+                        username: username,
+                        password: password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    message.textContent = "Inscription réussie. Redirection vers la connexion...";
+                    setTimeout(() => {
+                        window.location.href = "/";
+                    }, 1500);
+                } else {
+                    message.textContent = data.error || "Erreur lors de l'inscription";
+                }
+            } catch (error) {
+                message.textContent = "Erreur serveur";
+            }
+        });
+    </script>
+</body>
+</html>
