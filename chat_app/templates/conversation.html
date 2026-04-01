@@ -16,18 +16,55 @@
 
     <input id="chat-message-input" type="text" placeholder="Votre message" size="80">
     <button id="chat-message-submit">Envoyer</button>
+        
+        
+   <script>
+    const conversationId = "{{ conversation_id }}";
+    const params = new URLSearchParams(window.location.search);
+    const username = params.get("username") || "anonymous";
 
-    <script>
-        const conversationId = "{{ conversation_id }}";
-        const params = new URLSearchParams(window.location.search);
-        const username = params.get("username");
+    document.getElementById("conversation-id").textContent =
+        "Conversation ID : " + conversationId;
 
-        document.getElementById("conversation-id").textContent =
-            "Conversation ID : " + conversationId;
+    const socket = new WebSocket(
+        `ws://${window.location.host}/ws/chat/${conversationId}/?username=${username}`
+    );
 
-        // Plus tard :
-        // 1. charger les messages via API
-        // 2. envoyer les messages via WebSocket
-    </script>
+    const chatLog = document.getElementById("chat-log");
+    const messageInput = document.getElementById("chat-message-input");
+    const submitButton = document.getElementById("chat-message-submit");
+
+    socket.onopen = function () {
+        console.log("WebSocket connecté");
+    };
+
+    socket.onmessage = function (event) {
+        const data = JSON.parse(event.data);
+        chatLog.value += `${data.sender}: ${data.message}\n`;
+        chatLog.scrollTop = chatLog.scrollHeight;
+    };
+
+    socket.onclose = function () {
+        console.log("WebSocket fermé");
+    };
+
+    submitButton.onclick = function () {
+        const message = messageInput.value.trim();
+
+        if (message !== "") {
+            socket.send(JSON.stringify({
+                message: message,
+                sender: username
+            }));
+            messageInput.value = "";
+        }
+    };
+
+    messageInput.addEventListener("keyup", function (event) {
+        if (event.key === "Enter") {
+            submitButton.click();
+        }
+    });
+</script>
 </body>
 </html>
