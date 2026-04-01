@@ -1,21 +1,27 @@
 from datetime import datetime
-from chat_app.db.mongo import conversations_collection
+from bson import ObjectId
+from chat_app.db.mongo import get_conversations_collection
 
 def find_conversation_between(user1_id, user2_id):
-    return conversations_collection.find_one({
+    return get_conversations_collection().find_one({
         "participants": {"$all": [user1_id, user2_id], "$size": 2}
     })
 
 def create_conversation(conversation_doc):
-    return conversations_collection.insert_one(conversation_doc)
+    return get_conversations_collection().insert_one(conversation_doc)
 
 def find_conversations_by_user_id(user_id):
-    return list(conversations_collection.find({
+    return list(get_conversations_collection().find({
         "participants": user_id
-    }))
+    }).sort("last_message_at", -1))
+
+def find_conversation_by_id(conversation_id):
+    return get_conversations_collection().find_one({
+        "_id": ObjectId(conversation_id)
+    })
 
 def update_last_message(conversation_id):
-    conversations_collection.update_one(
-        {"_id": conversation_id},
+    return get_conversations_collection().update_one(
+        {"_id": ObjectId(conversation_id)},
         {"$set": {"last_message_at": datetime.utcnow()}}
     )

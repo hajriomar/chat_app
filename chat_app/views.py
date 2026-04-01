@@ -12,7 +12,7 @@ from chat_app.services.user_service import (
     get_received_friend_requests,
     accept_friend_request,
 )
-from chat_app.services.chat_service import get_user_conversations
+from chat_app.services.chat_service import get_user_conversations,get_conversation_messages
 from chat_app.services.presence_service import login_user, logout_user, list_online_users
 
 @extend_schema(
@@ -182,3 +182,26 @@ def accept_friend_request_view(request):
         return Response({"message": "Invitation acceptée"}, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+
+@api_view(["GET"])
+def get_conversation_messages_view(request, conversation_id):
+    username = request.GET.get("username")
+
+    if not username:
+        return Response(
+            {"error": "username requis"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        messages = get_conversation_messages(username, conversation_id)
+        return Response(
+            {"messages": messages},
+            status=status.HTTP_200_OK
+        )
+    except ValueError as e:
+        return Response(
+            {"error": str(e)},
+            status=status.HTTP_400_BAD_REQUEST
+        )

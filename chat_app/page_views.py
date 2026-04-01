@@ -14,6 +14,8 @@ def home_view(request):
     return render(request, "home.html")
 
 def conversation_page_view(request, conversation_id):
+    username = request.GET.get("username")
     return render(request, "conversation.html", {
+        "username": username,
         "conversation_id": conversation_id
     })
