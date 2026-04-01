@@ -1,6 +1,6 @@
 # chat_app
 
-1. Lancer les conteneurs :
+1. Lancer les conteneurs ://
    docker compose up --build
 
 2. Vérifier les services :
