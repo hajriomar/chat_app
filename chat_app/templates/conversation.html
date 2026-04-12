@@ -205,6 +205,8 @@
         const conversationId = "{{ conversation_id }}";
         const params = new URLSearchParams(window.location.search);
         const username = params.get("username") || "Anonyme";
+        const convLabel = params.get("label") || "Conversation";
+        const isGroup = params.get("is_group") === "1";
         const chatContainer = document.querySelector('#chat-container');
         const submitBtn = document.querySelector('#chat-message-submit');
 
@@ -213,8 +215,9 @@
         document.getElementById("nav-letter").textContent = username.charAt(0).toUpperCase();
         // Mise à jour de l'UI
         document.getElementById("session-id").textContent = "ID Session : " + conversationId;
-        document.getElementById("header-avatar").textContent = username.charAt(0).toUpperCase();
-        document.getElementById("display-name").textContent = "Chat avec " + username; // Optionnel : changer le titre
+        document.getElementById("header-avatar").textContent = isGroup ? "👥" : convLabel.charAt(0).toUpperCase();
+        document.getElementById("display-name").textContent = isGroup ? convLabel : "Chat avec " + convLabel;
+        document.title = isGroup ? convLabel : "Chat avec " + convLabel;
         // AJOUT : Demander la permission pour les notifications dès le chargement ---
         if (window.Notification && Notification.permission !== "granted") {
             Notification.requestPermission();
@@ -296,9 +299,8 @@
 
         // Remettre le titre normal quand l'utilisateur revient sur la page
         window.onfocus = function() {
-            document.title = "Chat - " + conversationId;
-        };
-
+    document.title = isGroup ? convLabel : "Chat avec " + convLabel;
+};
         chatSocket.onclose = () => {
             console.warn("Connexion fermée.");
             submitBtn.disabled = true;

@@ -5,6 +5,7 @@ from drf_spectacular.utils import extend_schema, OpenApiExample
 from django.http import JsonResponse
 from .db.mongo import users_collection
 from .db.redis_client import redis_client
+from chat_app.services.chat_service import get_user_conversations, create_group_conversation
 
 from chat_app.services.user_service import (
     register_user,
@@ -215,3 +216,26 @@ def get_friends(request):
             })
 
     return Response({"friends": friends_data}, status=status.HTTP_200_OK)
+
+@api_view(["POST"])
+def create_group_view(request):
+    data = request.data
+
+    try:
+        conversation_id = create_group_conversation(
+            creator_username=data["creator"],
+            participants_usernames=data["participants"],
+            group_name=data["group_name"]
+        )
+
+        return Response({
+            "success": True,
+            "conversation_id": str(conversation_id)
+        }, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        return Response({
+            "success": False,
+            "error": str(e)
+        }, status=status.HTTP_400_BAD_REQUEST)
+    

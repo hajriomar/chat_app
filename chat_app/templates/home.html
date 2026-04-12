@@ -508,7 +508,10 @@ async function loadFriends() {
         const a = document.createElement("a");
         a.className = "conv-item";
         a.id = `conv-${c.conversation_id}`; // ID pour retrouver la ligne
-        a.href = "/chat/" + c.conversation_id + "/?username=" + encodeURIComponent(username);
+        a.href = "/chat/" + c.conversation_id
+        + "/?username=" + encodeURIComponent(username)
+        + "&label=" + encodeURIComponent(c.label)
+        + "&is_group=" + (c.is_group ? "1" : "0");
         
         a.innerHTML = `
           <div class="conv-avatar-wrap">
