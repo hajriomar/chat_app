@@ -116,9 +116,21 @@ body {
 }
 .friend-bubble:hover .friend-avatar { transform: scale(1.07); }
 .friend-dot {
-  position: absolute; bottom: 1px; right: 1px;
-  width: 13px; height: 13px; background: var(--green);
-  border-radius: 50%; border: 2px solid var(--white);
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 2px solid var(--white);
+}
+
+.friend-dot.online {
+  background: var(--green);
+}
+
+.friend-dot.offline {
+  background: var(--red);
 }
 .friend-name {
   font-size: 11px; font-weight: 500; color: var(--sub);
@@ -353,9 +365,9 @@ body {
 
   <!-- Amis en ligne -->
   <div style="animation:fadeUp .4s ease both;">
-    <div class="section-title">En ligne maintenant</div>
+    <div class="section-title">Mes Amis</div>
     <div class="friends-strip" id="friends-strip"></div>
-    <div class="friends-empty" id="no-friends"><span>😴</span> Aucun ami connecté en ce moment</div>
+    <div class="friends-empty" id="no-friends">Aucun ami pour le moment</div>
   </div>
 
   <!-- Conversations -->
@@ -409,24 +421,53 @@ body {
   const ini = n => n ? n.charAt(0).toUpperCase() : "?";
 
   /* ─── ONLINE FRIENDS ─── */
-  async function loadOnlineFriends() {
-    try {
-      const r = await fetch("/api/online-friends/?username="+encodeURIComponent(username));
-      const d = await r.json();
-      const strip = document.getElementById("friends-strip");
-      strip.innerHTML = "";
-      if (!d.online_friends?.length) { document.getElementById("no-friends").style.display="flex"; return; }
-      document.getElementById("no-friends").style.display="none";
-      const palettes = ["linear-gradient(135deg,#60a5fa,#818cf8)","linear-gradient(135deg,#f472b6,#fb923c)","linear-gradient(135deg,#34d399,#22d3ee)","linear-gradient(135deg,#a78bfa,#f472b6)","linear-gradient(135deg,#fb923c,#f43f5e)"];
-      d.online_friends.forEach((f,i) => {
-        const div = document.createElement("div");
-        div.className = "friend-bubble";
-        div.style.animationDelay = (i*.05)+"s";
-        div.innerHTML = `<div class="friend-avatar-wrap"><div class="friend-avatar" style="background:${palettes[i%palettes.length]}">${ini(f.username)}</div><div class="friend-dot"></div></div><span class="friend-name">${f.username}</span>`;
-        strip.appendChild(div);
-      });
-    } catch(e) { console.error(e); }
+async function loadFriends() {
+  try {
+    const r = await fetch("/api/friends/?username=" + encodeURIComponent(username));
+    const d = await r.json();
+
+    const strip = document.getElementById("friends-strip");
+    strip.innerHTML = "";
+
+    if (!d.friends?.length) {
+      document.getElementById("no-friends").style.display = "flex";
+      return;
+    }
+
+    document.getElementById("no-friends").style.display = "none";
+
+    const palettes = [
+      "linear-gradient(135deg,#60a5fa,#818cf8)",
+      "linear-gradient(135deg,#f472b6,#fb923c)",
+      "linear-gradient(135deg,#34d399,#22d3ee)",
+      "linear-gradient(135deg,#a78bfa,#f472b6)",
+      "linear-gradient(135deg,#fb923c,#f43f5e)"
+    ];
+
+    d.friends.forEach((f, i) => {
+      const div = document.createElement("div");
+      div.className = "friend-bubble";
+      div.style.animationDelay = (i * 0.05) + "s";
+
+      const statusClass = f.online ? "online" : "offline";
+      const statusText = f.online ? "Connecté" : "Déconnecté";
+
+      div.innerHTML = `
+        <div class="friend-avatar-wrap">
+          <div class="friend-avatar" style="background:${palettes[i % palettes.length]}">
+            ${ini(f.username)}
+          </div>
+          <div class="friend-dot ${statusClass}" title="${statusText}"></div>
+        </div>
+        <span class="friend-name">${f.username}</span>
+      `;
+
+      strip.appendChild(div);
+    });
+  } catch (e) {
+    console.error(e);
   }
+}
 
   /* ─── CONVERSATIONS ─── */
   async function loadConversations() {
@@ -518,7 +559,7 @@ body {
       const r = await fetch("/api/accept-friend-request/", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({current_username:username, sender_username:sender}) });
       const d = await r.json();
       document.getElementById("msg-req").textContent = d.message||d.error||"";
-      loadRequests(); loadOnlineFriends(); loadConversations();
+      loadRequests(); loadFriends(); loadConversations();
     } catch { document.getElementById("msg-req").textContent = "Erreur serveur"; }
   }
 
@@ -552,7 +593,7 @@ body {
   }
 
   /* ─── INIT ─── */
-  loadOnlineFriends();
+  loadFriends();
 
   (async () => {
     try {
@@ -615,7 +656,7 @@ async function loadFriendsForGroup() {
     // On utilise online-friends pour les amis en ligne + available-users pour tous
     // En fait on veut tous les amis → on récupère les conversations duo existantes
     // La meilleure approche : récupérer tous les amis depuis le backend
-    const r = await fetch("/api/online-friends/?username=" + encodeURIComponent(username));
+    const r = await fetch("/api/friends/?username=" + encodeURIComponent(username));    
     const d = await r.json();
     // On charge aussi tous les utilisateurs disponibles pour les amis hors-ligne
     const r2 = await fetch("/api/conversations/?username=" + encodeURIComponent(username));
@@ -636,9 +677,9 @@ async function loadFriendsForGroup() {
       }
     });
     // On marque ceux qui sont en ligne
-    (d.online_friends || []).forEach(f => {
-      const found = friends.find(fr => fr.username === f.username);
-      if (found) found.online = true;
+    (d.friends || []).forEach(f => {
+     const found = friends.find(fr => fr.username === f.username);
+     if (found) found.online = f.online;
     });
  
     if (!friends.length) {
