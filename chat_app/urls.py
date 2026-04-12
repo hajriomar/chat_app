@@ -11,6 +11,8 @@ from .views import (
     send_friend_request_view,
     received_requests_view,
     accept_friend_request_view,
+    get_friends,
+    create_group_view,
 )
 
 urlpatterns = [
@@ -26,4 +28,6 @@ urlpatterns = [
     path("send-friend-request/", send_friend_request_view),
     path("received-requests/", received_requests_view),
     path("accept-friend-request/", accept_friend_request_view),
+    path("friends/", get_friends, name="get_friends"),
+    path("create-group/", create_group_view),
 ]

@@ -2,6 +2,10 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema, OpenApiExample
+from django.http import JsonResponse
+from .db.mongo import users_collection
+from .db.redis_client import redis_client
+from chat_app.services.chat_service import get_user_conversations, create_group_conversation
 
 from chat_app.services.user_service import (
     register_user,
@@ -182,3 +186,56 @@ def accept_friend_request_view(request):
         return Response({"message": "Invitation acceptée"}, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+
+@api_view(["GET"])
+def get_friends(request):
+    username = request.GET.get("username")
+
+    if not username:
+        return Response({"error": "username manquant"}, status=status.HTTP_400_BAD_REQUEST)
+
+    current_user = users_collection.find_one({"username": username})
+
+    if not current_user:
+        return Response({"error": "utilisateur introuvable"}, status=status.HTTP_404_NOT_FOUND)
+
+    online_users = set(list_online_users())
+    friends_ids = current_user.get("friends", [])
+    friends_data = []
+
+    for friend_id in friends_ids:
+        friend = users_collection.find_one({"_id": friend_id})
+
+        if friend:
+            friend_username = friend.get("username")
+
+            friends_data.append({
+                "username": friend_username,
+                "online": friend_username in online_users
+            })
+
+    return Response({"friends": friends_data}, status=status.HTTP_200_OK)
+
+@api_view(["POST"])
+def create_group_view(request):
+    data = request.data
+
+    try:
+        conversation_id = create_group_conversation(
+            creator_username=data["creator"],
+            participants_usernames=data["participants"],
+            group_name=data["group_name"]
+        )
+
+        return Response({
+            "success": True,
+            "conversation_id": str(conversation_id)
+        }, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        return Response({
+            "success": False,
+            "error": str(e)
+        }, status=status.HTTP_400_BAD_REQUEST)
+    

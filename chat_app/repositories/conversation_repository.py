@@ -3,7 +3,8 @@ from chat_app.db.mongo import conversations_collection
 
 def find_conversation_between(user1_id, user2_id):
     return conversations_collection.find_one({
-        "participants": {"$all": [user1_id, user2_id], "$size": 2}
+        "participants": {"$all": [user1_id, user2_id], "$size": 2},
+        "is_group": False
     })
 
 def create_conversation(conversation_doc):

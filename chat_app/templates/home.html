@@ -116,9 +116,21 @@ body {
 }
 .friend-bubble:hover .friend-avatar { transform: scale(1.07); }
 .friend-dot {
-  position: absolute; bottom: 1px; right: 1px;
-  width: 13px; height: 13px; background: var(--green);
-  border-radius: 50%; border: 2px solid var(--white);
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 2px solid var(--white);
+}
+
+.friend-dot.online {
+  background: var(--green);
+}
+
+.friend-dot.offline {
+  background: var(--red);
 }
 .friend-name {
   font-size: 11px; font-weight: 500; color: var(--sub);
@@ -249,6 +261,23 @@ body {
   .modal { width: calc(100vw - 24px); }
   .modal-overlay { justify-content: center; padding-right: 0; }
 }
+/* Badge Messenger sur l'avatar */
+.conv-avatar-wrap { position: relative; }
+.conv-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 14px;
+  height: 14px;
+  background: var(--accent);
+  border: 2px solid var(--white);
+  border-radius: 50%;
+  display: none; /* Caché par défaut */
+}
+
+/* Style pour message non lu */
+.unread .conv-name { font-weight: 700; }
+.unread .conv-preview { color: var(--text); font-weight: 600; }
 </style>
 </head>
 <body>
@@ -268,6 +297,9 @@ body {
 
   <button class="nav-btn" title="Inviter des amis" onclick="toggleModal('modal-invite')">
     🫂
+  </button>
+  <button class="nav-btn" title="Créer un groupe" onclick="toggleModal('modal-group')">
+    👥
   </button>
 
   <div class="nav-sep"></div>
@@ -309,14 +341,33 @@ body {
   </div>
 </div>
 
+<!-- MODAL créer un groupe -->
+<div class="modal-overlay" id="modal-group" onclick="overlayClose(event,'modal-group')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">👥 Créer un groupe</span>
+      <button class="modal-close" onclick="closeModal('modal-group')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="text" class="group-name-input" id="group-name-input" placeholder="Nom du groupe…" />
+      <div class="group-check-list" id="friends-checkboxes"></div>
+      <div class="modal-empty" id="no-friends-group"><span class="ei">😴</span>Aucun ami à ajouter</div>
+    </div>
+    <div class="modal-footer" id="msg-group" style="display:flex;flex-direction:column;gap:6px;padding:10px 18px 14px;">
+      <button class="btn-create-group" id="btn-create-group" onclick="createGroup()">Créer le groupe</button>
+      <div id="msg-group-text" style="font-size:12px;color:var(--accent);min-height:14px;"></div>
+    </div>
+  </div>
+</div>
+
 <!-- MAIN -->
 <main class="main">
 
   <!-- Amis en ligne -->
   <div style="animation:fadeUp .4s ease both;">
-    <div class="section-title">En ligne maintenant</div>
+    <div class="section-title">Mes Amis</div>
     <div class="friends-strip" id="friends-strip"></div>
-    <div class="friends-empty" id="no-friends"><span>😴</span> Aucun ami connecté en ce moment</div>
+    <div class="friends-empty" id="no-friends">Aucun ami pour le moment</div>
   </div>
 
   <!-- Conversations -->
@@ -335,7 +386,10 @@ body {
   const params   = new URLSearchParams(window.location.search);
   const username = params.get("username") || "Utilisateur";
   let allConvs   = [];
-
+  // AJOUT : Demander la permission pour les notifications dès le chargement ---
+        if (window.Notification && Notification.permission !== "granted") {
+            Notification.requestPermission();
+        }
   document.getElementById("nav-name").textContent   = username;
   document.getElementById("nav-letter").textContent = username.charAt(0).toUpperCase();
 
@@ -348,6 +402,7 @@ body {
       el.classList.add("open");
       if (id === "modal-requests") loadRequests();
       if (id === "modal-invite")   loadAvailableUsers();
+      if (id === "modal-group")    loadFriendsForGroup();
     }
   }
   function closeModal(id) { document.getElementById(id).classList.remove("open"); }
@@ -366,24 +421,53 @@ body {
   const ini = n => n ? n.charAt(0).toUpperCase() : "?";
 
   /* ─── ONLINE FRIENDS ─── */
-  async function loadOnlineFriends() {
-    try {
-      const r = await fetch("/api/online-friends/?username="+encodeURIComponent(username));
-      const d = await r.json();
-      const strip = document.getElementById("friends-strip");
-      strip.innerHTML = "";
-      if (!d.online_friends?.length) { document.getElementById("no-friends").style.display="flex"; return; }
-      document.getElementById("no-friends").style.display="none";
-      const palettes = ["linear-gradient(135deg,#60a5fa,#818cf8)","linear-gradient(135deg,#f472b6,#fb923c)","linear-gradient(135deg,#34d399,#22d3ee)","linear-gradient(135deg,#a78bfa,#f472b6)","linear-gradient(135deg,#fb923c,#f43f5e)"];
-      d.online_friends.forEach((f,i) => {
-        const div = document.createElement("div");
-        div.className = "friend-bubble";
-        div.style.animationDelay = (i*.05)+"s";
-        div.innerHTML = `<div class="friend-avatar-wrap"><div class="friend-avatar" style="background:${palettes[i%palettes.length]}">${ini(f.username)}</div><div class="friend-dot"></div></div><span class="friend-name">${f.username}</span>`;
-        strip.appendChild(div);
-      });
-    } catch(e) { console.error(e); }
+async function loadFriends() {
+  try {
+    const r = await fetch("/api/friends/?username=" + encodeURIComponent(username));
+    const d = await r.json();
+
+    const strip = document.getElementById("friends-strip");
+    strip.innerHTML = "";
+
+    if (!d.friends?.length) {
+      document.getElementById("no-friends").style.display = "flex";
+      return;
+    }
+
+    document.getElementById("no-friends").style.display = "none";
+
+    const palettes = [
+      "linear-gradient(135deg,#60a5fa,#818cf8)",
+      "linear-gradient(135deg,#f472b6,#fb923c)",
+      "linear-gradient(135deg,#34d399,#22d3ee)",
+      "linear-gradient(135deg,#a78bfa,#f472b6)",
+      "linear-gradient(135deg,#fb923c,#f43f5e)"
+    ];
+
+    d.friends.forEach((f, i) => {
+      const div = document.createElement("div");
+      div.className = "friend-bubble";
+      div.style.animationDelay = (i * 0.05) + "s";
+
+      const statusClass = f.online ? "online" : "offline";
+      const statusText = f.online ? "Connecté" : "Déconnecté";
+
+      div.innerHTML = `
+        <div class="friend-avatar-wrap">
+          <div class="friend-avatar" style="background:${palettes[i % palettes.length]}">
+            ${ini(f.username)}
+          </div>
+          <div class="friend-dot ${statusClass}" title="${statusText}"></div>
+        </div>
+        <span class="friend-name">${f.username}</span>
+      `;
+
+      strip.appendChild(div);
+    });
+  } catch (e) {
+    console.error(e);
   }
+}
 
   /* ─── CONVERSATIONS ─── */
   async function loadConversations() {
@@ -397,7 +481,7 @@ body {
 
   const convPalettes = ["linear-gradient(135deg,#34d399,#3b82f6)","linear-gradient(135deg,#f472b6,#a78bfa)","linear-gradient(135deg,#fb923c,#f43f5e)","linear-gradient(135deg,#60a5fa,#818cf8)","linear-gradient(135deg,#4ade80,#22d3ee)"];
 
-  function renderConvs(list) {
+  /*function renderConvs(list) {
     const box = document.getElementById("conv-list");
     box.innerHTML = "";
     if (!list?.length) {
@@ -412,6 +496,35 @@ body {
       a.innerHTML = `<div class="conv-avatar" style="background:${convPalettes[i%convPalettes.length]}">${ini(c.label)}</div><div class="conv-info"><div class="conv-name">${c.label}</div><div class="conv-preview">Appuyer pour ouvrir</div></div><span class="conv-arrow">›</span>`;
       box.appendChild(a);
     });
+  }*/
+  function renderConvs(list) {
+      const box = document.getElementById("conv-list");
+      box.innerHTML = "";
+      if (!list?.length) {
+        box.innerHTML = `<div class="conv-empty" style="display:flex;"><span class="empty-icon">💬</span><p>Aucune conversation</p></div>`;
+        return;
+      }
+      list.forEach((c, i) => {
+        const a = document.createElement("a");
+        a.className = "conv-item";
+        a.id = `conv-${c.conversation_id}`; // ID pour retrouver la ligne
+        a.href = "/chat/" + c.conversation_id
+        + "/?username=" + encodeURIComponent(username)
+        + "&label=" + encodeURIComponent(c.label)
+        + "&is_group=" + (c.is_group ? "1" : "0");
+        
+        a.innerHTML = `
+          <div class="conv-avatar-wrap">
+            <div class="conv-avatar" style="background:${convPalettes[i % convPalettes.length]}">${ini(c.label)}</div>
+            <div class="conv-badge" id="badge-${c.conversation_id}"></div>
+          </div>
+          <div class="conv-info">
+            <div class="conv-name">${c.label}</div>
+            <div class="conv-preview" id="preview-${c.conversation_id}">Appuyer pour ouvrir</div>
+          </div>
+          <span class="conv-arrow">›</span>`;
+        box.appendChild(a);
+      });
   }
 
   function filterConv() {
@@ -449,7 +562,7 @@ body {
       const r = await fetch("/api/accept-friend-request/", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({current_username:username, sender_username:sender}) });
       const d = await r.json();
       document.getElementById("msg-req").textContent = d.message||d.error||"";
-      loadRequests(); loadOnlineFriends(); loadConversations();
+      loadRequests(); loadFriends(); loadConversations();
     } catch { document.getElementById("msg-req").textContent = "Erreur serveur"; }
   }
 
@@ -483,8 +596,8 @@ body {
   }
 
   /* ─── INIT ─── */
-  loadOnlineFriends();
-  loadConversations();
+  loadFriends();
+
   (async () => {
     try {
       const r = await fetch("/api/received-requests/?username="+encodeURIComponent(username));
@@ -495,6 +608,140 @@ body {
       }
     } catch {}
   })();
+  // Connexion à un WebSocket global (ou un par conversation)
+// Note: Pour simplifier sans changer ton routing, on boucle sur tes convs
+  function connectNotifications() {
+      allConvs.forEach(conv => {
+          const socket = new WebSocket('ws://' + window.location.host + '/ws/chat/' + conv.conversation_id + '/');
+          
+          socket.onmessage = function(e) {
+              const data = JSON.parse(e.data);
+              
+              // Si le message vient de quelqu'un d'autre
+              if (data.sender !== username) {
+                  // 1. Afficher le badge bleu
+                  const badge = document.getElementById(`badge-${conv.conversation_id}`);
+                  if (badge) badge.style.display = "block";
+                  
+                  // 2. Changer le texte de prévisualisation
+                  const preview = document.getElementById(`preview-${conv.conversation_id}`);
+                  if (preview) {
+                      preview.textContent = "Nouveau message : " + (data.message || data.text || "...");
+                      document.getElementById(`conv-${conv.conversation_id}`).classList.add('unread');
+                  }
+                  
+                  // 3. Notification système (optionnel sur l'accueil)
+                  if (Notification.permission === "granted") {
+                      new Notification("Nouveau message de " + data.sender, {
+                          body: data.message
+                      });
+                  }
+              }
+          };
+      });
+  }
+
+  // Appeler cette fonction après le chargement des conversations
+  loadConversations().then(() => {
+      connectNotifications();
+  });
+
+
+
+
+// ─── GROUPE ───
+// Charge TOUS les amis (pas seulement en ligne) pour le formulaire groupe
+async function loadFriendsForGroup() {
+  const container = document.getElementById("friends-checkboxes");
+  container.innerHTML = "<div style='padding:12px 18px;color:var(--sub);font-size:13px;'>Chargement…</div>";
+  document.getElementById("msg-group-text").textContent = "";
+  try {
+    // On utilise online-friends pour les amis en ligne + available-users pour tous
+    // En fait on veut tous les amis → on récupère les conversations duo existantes
+    // La meilleure approche : récupérer tous les amis depuis le backend
+    const r = await fetch("/api/friends/?username=" + encodeURIComponent(username));    
+    const d = await r.json();
+    // On charge aussi tous les utilisateurs disponibles pour les amis hors-ligne
+    const r2 = await fetch("/api/conversations/?username=" + encodeURIComponent(username));
+    const d2 = await r2.json();
+ 
+    container.innerHTML = "";
+ 
+    // On construit la liste des amis depuis les conversations duo
+    const friends = [];
+    const seenNames = new Set();
+    (d2.conversations || []).forEach(conv => {
+      if (!conv.is_group) {
+        const name = conv.label;
+        if (name && !seenNames.has(name)) {
+          seenNames.add(name);
+          friends.push({ username: name, online: false });
+        }
+      }
+    });
+    // On marque ceux qui sont en ligne
+    (d.friends || []).forEach(f => {
+     const found = friends.find(fr => fr.username === f.username);
+     if (found) found.online = f.online;
+    });
+ 
+    if (!friends.length) {
+      document.getElementById("no-friends-group").style.display = "block";
+      return;
+    }
+    document.getElementById("no-friends-group").style.display = "none";
+ 
+    friends.forEach(f => {
+      const item = document.createElement("div");
+      item.className = "group-check-item";
+      item.dataset.username = f.username;
+      item.innerHTML = `
+        <input type="checkbox" value="${f.username}" />
+        <div class="group-check-box">✓</div>
+        <div class="modal-avatar">${ini(f.username)}</div>
+        <span class="modal-name">${f.username}${f.online ? ' <span style="color:var(--green);font-size:11px;">●</span>' : ''}</span>`;
+      item.addEventListener("click", () => {
+        item.classList.toggle("selected");
+        const cb = item.querySelector("input");
+        cb.checked = !cb.checked;
+      });
+      container.appendChild(item);
+    });
+  } catch(e) { console.error(e); container.innerHTML = "<div style='padding:12px 18px;color:var(--red);font-size:13px;'>Erreur de chargement</div>"; }
+}
+ 
+async function createGroup() {
+  const groupName = document.getElementById("group-name-input").value.trim();
+  const checked = document.querySelectorAll("#friends-checkboxes .group-check-item.selected input");
+  const participants = Array.from(checked).map(cb => cb.value);
+  const msgEl = document.getElementById("msg-group-text");
+  const btn = document.getElementById("btn-create-group");
+ 
+  if (!groupName) { msgEl.style.color = "var(--red)"; msgEl.textContent = "Donne un nom au groupe !"; return; }
+  if (participants.length === 0) { msgEl.style.color = "var(--red)"; msgEl.textContent = "Sélectionne au moins un ami !"; return; }
+ 
+  btn.disabled = true; btn.textContent = "Création…";
+  try {
+    const res = await fetch("/api/create-group/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ creator: username, participants, group_name: groupName })
+    });
+    const data = await res.json();
+    if (data.success) {
+      closeModal("modal-group");
+      // Recharger les conversations puis rediriger
+      await loadConversations();
+      window.location.href = "/chat/" + data.conversation_id + "/?username=" + encodeURIComponent(username);
+    } else {
+      msgEl.style.color = "var(--red)"; msgEl.textContent = data.error || "Erreur création";
+      btn.disabled = false; btn.textContent = "Créer le groupe";
+    }
+  } catch(e) {
+    msgEl.style.color = "var(--red)"; msgEl.textContent = "Erreur serveur";
+    btn.disabled = false; btn.textContent = "Créer le groupe";
+  }
+}
 </script>
 </body>
 </html>
