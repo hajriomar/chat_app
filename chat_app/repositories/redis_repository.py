@@ -11,7 +11,7 @@ def add_online_user(username):
     #Ajouter à son historique personnel (List)
     redis_client.lpush(
         f"user:{username}:history",
-        f"login:{datetime.utcnow().isoformat()}"
+        f"login:{datetime.now(timezone.utc).isoformat()}"
     )
     # On incrémente le compteur total de connexions du site
     if username != "admin":
@@ -26,7 +26,7 @@ def remove_online_user(username):
     # On ajoute juste la ligne de déconnexion dans son historique perso
     redis_client.lpush(
         f"user:{username}:history",
-        f"logout:{datetime.utcnow().isoformat()}"
+        f"logout:{datetime.now(timezone.utc).isoformat()}"
     )
 def get_online_users():
     return list(redis_client.smembers(ONLINE_USERS_KEY))
@@ -44,7 +44,7 @@ def get_total_logins():
 
 def log_global_activity(username, event_type, duration=None):
     # event_type peut être "login" ou "logout"
-    timestamp = datetime.utcnow().isoformat()
+    timestamp = datetime.now(timezone.utc).isoformat()
     
     # On ajoute la durée seulement si elle existe
     if duration:

@@ -8,12 +8,11 @@ from chat_app.db.redis_client import redis_client
 
 def login_user(username):
     add_online_user(username)
-    if username != "admin":
-        increment_global_connections()
-        # Stocker l'heure de login pour calculer la durée plus tard
-        login_time = datetime.now(timezone.utc).isoformat()
-        redis_client.set(f"login_time:{username}", login_time)
-        log_global_activity(username, "login")
+    increment_global_connections()
+    # Stocker l'heure de login pour calculer la durée plus tard
+    login_time = datetime.now(timezone.utc).isoformat()
+    redis_client.set(f"login_time:{username}", login_time)
+    log_global_activity(username, "login")
 
 def logout_user(username):
     remove_online_user(username)
