@@ -6,7 +6,8 @@ from django.http import JsonResponse
 from .db.mongo import users_collection
 from .db.redis_client import redis_client
 from chat_app.services.chat_service import get_user_conversations, create_group_conversation
-
+from chat_app.repositories.message_repository import get_most_active_users,get_most_solicited_users,get_groups_and_members
+import traceback
 from chat_app.services.user_service import (
     register_user,
     authenticate_user,
@@ -15,6 +16,12 @@ from chat_app.services.user_service import (
     send_friend_request,
     get_received_friend_requests,
     accept_friend_request,
+)
+from chat_app.repositories.redis_repository import (
+    get_online_users, 
+    get_total_logins, 
+    get_global_activity_history, 
+    get_all_users_total_time
 )
 from chat_app.services.chat_service import get_user_conversations
 from chat_app.services.presence_service import login_user, logout_user, list_online_users
@@ -83,9 +90,7 @@ def login_view(request):
     request={
         "application/json": {
             "type": "object",
-            "properties": {
-                "username": {"type": "string"},
-            },
+            "properties": {"username": {"type": "string"}},
             "required": ["username"],
         }
     },
@@ -93,9 +98,26 @@ def login_view(request):
 )
 @api_view(["POST"])
 def logout_view(request):
-    data = request.data
-    logout_user(data["username"])
-    return Response({"message": "Utilisateur déconnecté"})
+    try:
+        data = request.data
+        username = data.get("username")
+        
+        # Sécurité : on vérifie que le nom est bien reçu
+        if not username:
+            return Response({"error": "Nom d'utilisateur manquant dans la requête"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # La fonction qui crashe potentiellement
+        logout_user(username)
+        
+        return Response({"message": f"Utilisateur {username} déconnecté"}, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        # On capture le crash exact et on l'imprime !
+        traceback.print_exc() 
+        return Response({
+            "error": "Alerte Crash Django", 
+            "detail": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @extend_schema(responses={200: dict})
@@ -108,18 +130,31 @@ def online_users_view(request):
 @api_view(["POST"])
 def login_page_view(request):
     data = request.data
+    username = data.get("username")
+    password = data.get("password")
 
+    # 1. Vérification spécifique pour le compte administrateur
+    if username == "admin" and password == "admin":
+        login_user("admin") # On marque l'admin comme "online" dans Redis
+        return Response({
+            "message": "Connexion administrateur réussie",
+            "username": "admin",
+            "is_admin": True  # Signal pour le frontend
+        }, status=status.HTTP_200_OK)
+
+    # 2. Logique normale pour les autres utilisateurs
     try:
         user = authenticate_user(
-            username=data["username"],
-            password=data["password"]
+            username=username,
+            password=password
         )
 
         login_user(user["username"])
 
         return Response({
             "message": "Connexion réussie",
-            "username": user["username"]
+            "username": user["username"],
+            "is_admin": False
         }, status=status.HTTP_200_OK)
 
     except Exception as e:
@@ -239,3 +274,49 @@ def create_group_view(request):
             "error": str(e)
         }, status=status.HTTP_400_BAD_REQUEST)
     
+#AJOUT
+@api_view(["GET"])
+def admin_stats_api(request):
+    try:
+        # Récupération des données brutes
+        online_users = get_online_users()
+        # Décodage des utilisateurs en ligne (au cas où Redis renvoie des bytes)
+        online_users_decoded = [u.decode('utf-8') if isinstance(u, bytes) else u for u in online_users]
+        
+        total_logins = get_total_logins()
+        if isinstance(total_logins, bytes):
+            total_logins = total_logins.decode('utf-8')
+            
+        raw_activities = get_global_activity_history()
+        
+        # Formatage de l'historique (username|action|timestamp)
+        formatted_activities = []
+        for act in raw_activities:
+            parts = act.split('|')
+            # On vérifie si on a 3 (login) ou 4 (logout avec durée) parties
+            if len(parts) >= 3:
+                formatted_activities.append({
+                    "username": parts[0],
+                    "action": parts[1],
+                    "timestamp": parts[2],
+                    "duration": parts[3] if len(parts) > 3 else None # Récupère la durée
+                })
+        most_active = get_most_active_users(3)
+        most_popular = get_most_solicited_users(3) # Utilise la fonction de sollicitation
+        groups_list = get_groups_and_members()
+        users_time = get_all_users_total_time()
+        return Response({
+            "online_count": len(online_users_decoded),
+            "online_users": online_users_decoded,
+            "total_logins": int(total_logins) if total_logins else 0,
+            "recent_activity": formatted_activities,
+            "most_active_users": most_active,
+            "most_popular": most_popular, 
+            "groups_list": groups_list,
+            "users_time": users_time
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        traceback.print_exc()  # ← Affiche l'erreur complète dans la console Django
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+ 

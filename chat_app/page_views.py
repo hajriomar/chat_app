@@ -35,3 +35,6 @@ def conversation_page_view(request, conversation_id):
         "conversation_id": conversation_id,
         "history": history_text # On envoie le texte au HTML
     })
+
+def admin_dashboard_view(request):
+    return render(request, "admin_dashboard.html")

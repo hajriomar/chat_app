@@ -111,31 +111,24 @@
             const password = document.getElementById("password").value;
             const message = document.getElementById("message");
 
-            try {
-                const response = await fetch("/api/login-page/", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        username: username,
-                        password: password
-                    })
-                });
+            const response = await fetch("/api/login-page/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, password })
+            });
 
-                const data = await response.json();
+            const data = await response.json();
 
-                if (response.ok) {
-                    message.style.color = "green";
-                    message.textContent = data.message;
-                    window.location.href = "/home/?username=" + encodeURIComponent(username);
+            if (response.ok) {
+                // Si c'est l'admin, on redirige vers le dashboard
+                if (data.is_admin) {
+                    window.location.href = "/admin-dashboard/?username=" + data.username;
                 } else {
-                    message.style.color = "red";
-                    message.textContent = data.error || "Erreur de connexion";
+                    // Sinon, redirection normale vers l'accueil
+                    window.location.href = "/home/?username=" + data.username;
                 }
-            } catch (error) {
-                message.style.color = "red";
-                message.textContent = "Erreur serveur";
+            } else {
+                alert(data.error || "Erreur de connexion");
             }
         });
     </script>

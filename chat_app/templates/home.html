@@ -383,8 +383,13 @@ body {
 </main>
 
 <script>
+  
   const params   = new URLSearchParams(window.location.search);
   const username = params.get("username") || "Utilisateur";
+  // --- AJOUT SÉCURITÉ ADMIN ---
+  if (username === "admin") {
+      window.location.href = "/admin-dashboard/?username=admin";
+  }
   let allConvs   = [];
   // AJOUT : Demander la permission pour les notifications dès le chargement ---
         if (window.Notification && Notification.permission !== "granted") {
