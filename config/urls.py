@@ -1,8 +1,12 @@
 from django.contrib import admin
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+<<<<<<< HEAD
 from chat_app.page_views import index_view, register_page_view, home_view, conversation_page_view
 from chat_app import views
+=======
+from chat_app.page_views import index_view, register_page_view, home_view, conversation_page_view,admin_dashboard_view
+>>>>>>> mariem
 
 urlpatterns = [
     path("", index_view, name="index"),
@@ -10,8 +14,15 @@ urlpatterns = [
     path("home/", home_view, name="home"),
     path("chat/<str:conversation_id>/", conversation_page_view, name="conversation-page"),
 
-    path("admin/", admin.site.urls),
+    path('admin-dashboard/', admin_dashboard_view, name='admin-dashboard'),
+
+    path('admin/', admin.site.urls),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
     path("api/", include("chat_app.urls")),
+<<<<<<< HEAD
     path("api/conversations/<str:conversation_id>/messages/", views.get_conversation_messages_view, name="get_conversation_messages"),]
+=======
+    
+]
+>>>>>>> mariem

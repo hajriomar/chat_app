@@ -117,9 +117,11 @@ body {
 .friend-bubble:hover .friend-avatar { transform: scale(1.07); }
 .friend-dot {
   position: absolute; bottom: 1px; right: 1px;
-  width: 13px; height: 13px; background: var(--green);
-  border-radius: 50%; border: 2px solid var(--white);
+  width: 13px; height: 13px; border-radius: 50%;
+  border: 2px solid var(--white);
 }
+.friend-dot.online  { background: var(--green); }
+.friend-dot.offline { background: var(--red); }
 .friend-name {
   font-size: 11px; font-weight: 500; color: var(--sub);
   max-width: 56px; text-align: center;
@@ -238,6 +240,84 @@ body {
 .modal-empty .ei { font-size: 26px; opacity: 0.35; display: block; margin-bottom: 6px; }
 .modal-footer { padding: 8px 18px 12px; font-size: 12px; color: var(--accent); font-weight: 500; min-height: 14px; border-top: 1px solid var(--border); }
 
+/* Badge Messenger sur l'avatar */
+.conv-avatar-wrap { position: relative; }
+.conv-badge {
+  position: absolute; bottom: -2px; right: -2px;
+  width: 14px; height: 14px;
+  background: var(--accent); border: 2px solid var(--white);
+  border-radius: 50%; display: none;
+}
+.unread .conv-name { font-weight: 700; }
+.unread .conv-preview { color: var(--text); font-weight: 600; }
+
+/* ═══════════════════════════════════════════
+   CRÉER UN GROUPE — style amélioré
+═══════════════════════════════════════════ */
+.group-name-input {
+  display: block; width: calc(100% - 36px); margin: 14px 18px 10px;
+  padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px;
+  font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px;
+  color: var(--text); outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.group-name-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(10,132,255,0.1);
+}
+.group-name-input::placeholder { color: #9ca3af; }
+
+.friends-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.7px; color: var(--sub); padding: 0 18px 8px;
+}
+
+.group-check-list {
+  padding: 0 12px 12px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+
+.group-check-item {
+  display: flex; align-items: center; gap: 11px;
+  padding: 10px 12px; border-radius: 10px; cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: background 0.12s, border-color 0.12s;
+  user-select: none;
+}
+.group-check-item:hover { background: var(--bg); }
+.group-check-item.selected { background: var(--accent-light); border-color: var(--accent); }
+
+.g-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: linear-gradient(135deg, #a78bfa, #60a5fa);
+  color: white; font-size: 14px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.g-info { flex: 1; }
+.g-name  { font-size: 14px; font-weight: 500; color: var(--text); }
+.g-status { font-size: 11px; color: var(--sub); margin-top: 1px; }
+.g-status.online { color: var(--green); }
+
+.g-check {
+  width: 20px; height: 20px; border-radius: 6px;
+  border: 1.5px solid #d1d5db; background: white;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: background 0.12s, border-color 0.12s;
+}
+.group-check-item.selected .g-check { background: var(--accent); border-color: var(--accent); }
+.g-check svg { display: none; }
+.group-check-item.selected .g-check svg { display: block; }
+
+.btn-create-group {
+  width: 100%; padding: 11px; background: var(--accent); color: white;
+  border: none; border-radius: 10px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-create-group:hover { background: #0070e0; }
+.btn-create-group:disabled { background: #93c5fd; cursor: not-allowed; }
+
 /* ANIMATIONS */
 @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
 @keyframes fadeIn  { from { opacity:0; } to { opacity:1; } }
@@ -265,10 +345,8 @@ body {
     🔔
     <span class="nav-badge" id="badge-requests">0</span>
   </button>
-
-  <button class="nav-btn" title="Inviter des amis" onclick="toggleModal('modal-invite')">
-    🫂
-  </button>
+  <button class="nav-btn" title="Inviter des amis" onclick="toggleModal('modal-invite')">🫂</button>
+  <button class="nav-btn" title="Créer un groupe" onclick="toggleModal('modal-group')">👥</button>
 
   <div class="nav-sep"></div>
 
@@ -309,14 +387,34 @@ body {
   </div>
 </div>
 
+<!-- MODAL créer un groupe -->
+<div class="modal-overlay" id="modal-group" onclick="overlayClose(event,'modal-group')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">👥 Créer un groupe</span>
+      <button class="modal-close" onclick="closeModal('modal-group')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="text" class="group-name-input" id="group-name-input" placeholder="Nom du groupe…">
+      <div class="friends-label">Ajouter des amis</div>
+      <div class="group-check-list" id="friends-checkboxes"></div>
+      <div class="modal-empty" id="no-friends-group"><span class="ei">😴</span>Aucun ami à ajouter</div>
+    </div>
+    <div class="modal-footer" style="display:flex;flex-direction:column;gap:6px;padding:10px 18px 14px;">
+      <button class="btn-create-group" id="btn-create-group" onclick="createGroup()">Créer le groupe</button>
+      <div id="msg-group-text" style="font-size:12px;color:var(--accent);min-height:14px;text-align:center;"></div>
+    </div>
+  </div>
+</div>
+
 <!-- MAIN -->
 <main class="main">
 
-  <!-- Amis en ligne -->
+  <!-- Amis -->
   <div style="animation:fadeUp .4s ease both;">
-    <div class="section-title">En ligne maintenant</div>
+    <div class="section-title">Mes Amis</div>
     <div class="friends-strip" id="friends-strip"></div>
-    <div class="friends-empty" id="no-friends"><span>😴</span> Aucun ami connecté en ce moment</div>
+    <div class="friends-empty" id="no-friends">Aucun ami pour le moment</div>
   </div>
 
   <!-- Conversations -->
@@ -332,169 +430,343 @@ body {
 </main>
 
 <script>
-  const params   = new URLSearchParams(window.location.search);
-  const username = params.get("username") || "Utilisateur";
-  let allConvs   = [];
+const params   = new URLSearchParams(window.location.search);
+const username = params.get("username") || "Utilisateur";
 
-  document.getElementById("nav-name").textContent   = username;
-  document.getElementById("nav-letter").textContent = username.charAt(0).toUpperCase();
+if (username === "admin") {
+  window.location.href = "/admin-dashboard/?username=admin";
+}
 
-  /* ─── MODALS ─── */
-  function toggleModal(id) {
-    const el = document.getElementById(id);
-    const open = el.classList.contains("open");
-    document.querySelectorAll(".modal-overlay").forEach(m => m.classList.remove("open"));
-    if (!open) {
-      el.classList.add("open");
-      if (id === "modal-requests") loadRequests();
-      if (id === "modal-invite")   loadAvailableUsers();
-    }
+let allConvs = [];
+
+if (window.Notification && Notification.permission !== "granted") {
+  Notification.requestPermission();
+}
+
+document.getElementById("nav-name").textContent   = username;
+document.getElementById("nav-letter").textContent = username.charAt(0).toUpperCase();
+
+/* ─── MODALS ─── */
+function toggleModal(id) {
+  const el = document.getElementById(id);
+  const open = el.classList.contains("open");
+  document.querySelectorAll(".modal-overlay").forEach(m => m.classList.remove("open"));
+  if (!open) {
+    el.classList.add("open");
+    if (id === "modal-requests") loadRequests();
+    if (id === "modal-invite")   loadAvailableUsers();
+    if (id === "modal-group")    loadFriendsForGroup();
   }
-  function closeModal(id) { document.getElementById(id).classList.remove("open"); }
-  function overlayClose(e, id) { if (e.target === e.currentTarget) closeModal(id); }
+}
+function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+function overlayClose(e, id) { if (e.target === e.currentTarget) closeModal(id); }
 
-  /* ─── LOGOUT ─── */
-  document.getElementById("logout-btn").addEventListener("click", async () => {
-    try {
-      const r = await fetch("/api/logout/", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({username}) });
-      const d = await r.json();
-      if (r.ok) { alert(d.message||"Déconnexion réussie"); window.location.href="/"; }
-      else alert(d.error||"Erreur");
-    } catch { alert("Erreur serveur"); }
-  });
+/* ─── LOGOUT ─── */
+document.getElementById("logout-btn").addEventListener("click", async () => {
+  try {
+    const r = await fetch("/api/logout/", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({username}) });
+    const d = await r.json();
+    if (r.ok) { alert(d.message||"Déconnexion réussie"); window.location.href="/"; }
+    else alert(d.error||"Erreur");
+  } catch { alert("Erreur serveur"); }
+});
 
-  const ini = n => n ? n.charAt(0).toUpperCase() : "?";
+const ini = n => n ? n.charAt(0).toUpperCase() : "?";
 
-  /* ─── ONLINE FRIENDS ─── */
-  async function loadOnlineFriends() {
-    try {
-      const r = await fetch("/api/online-friends/?username="+encodeURIComponent(username));
-      const d = await r.json();
-      const strip = document.getElementById("friends-strip");
-      strip.innerHTML = "";
-      if (!d.online_friends?.length) { document.getElementById("no-friends").style.display="flex"; return; }
-      document.getElementById("no-friends").style.display="none";
-      const palettes = ["linear-gradient(135deg,#60a5fa,#818cf8)","linear-gradient(135deg,#f472b6,#fb923c)","linear-gradient(135deg,#34d399,#22d3ee)","linear-gradient(135deg,#a78bfa,#f472b6)","linear-gradient(135deg,#fb923c,#f43f5e)"];
-      d.online_friends.forEach((f,i) => {
-        const div = document.createElement("div");
-        div.className = "friend-bubble";
-        div.style.animationDelay = (i*.05)+"s";
-        div.innerHTML = `<div class="friend-avatar-wrap"><div class="friend-avatar" style="background:${palettes[i%palettes.length]}">${ini(f.username)}</div><div class="friend-dot"></div></div><span class="friend-name">${f.username}</span>`;
-        strip.appendChild(div);
-      });
-    } catch(e) { console.error(e); }
-  }
-
-  /* ─── CONVERSATIONS ─── */
-  async function loadConversations() {
-    try {
-      const r = await fetch("/api/conversations/?username="+encodeURIComponent(username));
-      const d = await r.json();
-      allConvs = d.conversations || [];
-      renderConvs(allConvs);
-    } catch(e) { console.error(e); }
-  }
-
-  const convPalettes = ["linear-gradient(135deg,#34d399,#3b82f6)","linear-gradient(135deg,#f472b6,#a78bfa)","linear-gradient(135deg,#fb923c,#f43f5e)","linear-gradient(135deg,#60a5fa,#818cf8)","linear-gradient(135deg,#4ade80,#22d3ee)"];
-
-  function renderConvs(list) {
-    const box = document.getElementById("conv-list");
-    box.innerHTML = "";
-    if (!list?.length) {
-      box.innerHTML = `<div class="conv-empty" style="display:flex;"><span class="empty-icon">💬</span><p>Aucune conversation pour le moment</p><p style="font-size:12px;margin-top:4px;">Invitez des amis pour commencer à discuter</p></div>`;
+/* ─── ONLINE FRIENDS ─── */
+async function loadFriends() {
+  try {
+    const r = await fetch("/api/friends/?username=" + encodeURIComponent(username));
+    const d = await r.json();
+    const strip = document.getElementById("friends-strip");
+    strip.innerHTML = "";
+    if (!d.friends?.length) {
+      document.getElementById("no-friends").style.display = "flex";
       return;
     }
-    list.forEach((c,i) => {
-      const a = document.createElement("a");
-      a.className = "conv-item";
-      a.href = "/chat/"+c.conversation_id+"/?username="+encodeURIComponent(username);
-      a.style.animationDelay = (i*.04)+"s";
-      a.innerHTML = `<div class="conv-avatar" style="background:${convPalettes[i%convPalettes.length]}">${ini(c.label)}</div><div class="conv-info"><div class="conv-name">${c.label}</div><div class="conv-preview">Appuyer pour ouvrir</div></div><span class="conv-arrow">›</span>`;
-      box.appendChild(a);
+    document.getElementById("no-friends").style.display = "none";
+    const palettes = [
+      "linear-gradient(135deg,#60a5fa,#818cf8)",
+      "linear-gradient(135deg,#f472b6,#fb923c)",
+      "linear-gradient(135deg,#34d399,#22d3ee)",
+      "linear-gradient(135deg,#a78bfa,#f472b6)",
+      "linear-gradient(135deg,#fb923c,#f43f5e)"
+    ];
+    d.friends.forEach((f, i) => {
+      const div = document.createElement("div");
+      div.className = "friend-bubble";
+      div.style.animationDelay = (i * 0.05) + "s";
+      const statusClass = f.online ? "online" : "offline";
+      const statusText  = f.online ? "Connecté" : "Déconnecté";
+      div.innerHTML = `
+        <div class="friend-avatar-wrap">
+          <div class="friend-avatar" style="background:${palettes[i % palettes.length]}">${ini(f.username)}</div>
+          <div class="friend-dot ${statusClass}" title="${statusText}"></div>
+        </div>
+        <span class="friend-name">${f.username}</span>`;
+      strip.appendChild(div);
     });
-  }
+  } catch(e) { console.error(e); }
+}
 
-  function filterConv() {
-    const q = document.getElementById("search-input").value.toLowerCase().trim();
-    renderConvs(q ? allConvs.filter(c=>c.label.toLowerCase().includes(q)) : allConvs);
-  }
+/* ─── CONVERSATIONS ─── */
+async function loadConversations() {
+  try {
+    const r = await fetch("/api/conversations/?username="+encodeURIComponent(username));
+    const d = await r.json();
+    allConvs = d.conversations || [];
+    renderConvs(allConvs);
+  } catch(e) { console.error(e); }
+}
 
-  /* ─── RECEIVED REQUESTS ─── */
-  async function loadRequests() {
-    try {
-      const r = await fetch("/api/received-requests/?username="+encodeURIComponent(username));
-      const d = await r.json();
-      const list = document.getElementById("req-list");
-      list.innerHTML = "";
-      document.getElementById("msg-req").textContent = "";
-      if (!d.requests?.length) {
-        document.getElementById("no-req").style.display = "block";
-        document.getElementById("badge-requests").style.display = "none";
-        return;
+const convPalettes = [
+  "linear-gradient(135deg,#34d399,#3b82f6)",
+  "linear-gradient(135deg,#f472b6,#a78bfa)",
+  "linear-gradient(135deg,#fb923c,#f43f5e)",
+  "linear-gradient(135deg,#60a5fa,#818cf8)",
+  "linear-gradient(135deg,#4ade80,#22d3ee)"
+];
+
+function renderConvs(list) {
+  const box = document.getElementById("conv-list");
+  box.innerHTML = "";
+  if (!list?.length) {
+    box.innerHTML = `<div class="conv-empty" style="display:flex;"><span class="empty-icon">💬</span><p>Aucune conversation</p></div>`;
+    return;
+  }
+  list.forEach((c, i) => {
+    const a = document.createElement("a");
+    a.className = "conv-item";
+    a.id = `conv-${c.conversation_id}`;
+    a.href = "/chat/" + c.conversation_id
+      + "/?username=" + encodeURIComponent(username)
+      + "&label=" + encodeURIComponent(c.label)
+      + "&is_group=" + (c.is_group ? "1" : "0");
+    a.style.animationDelay = (i * .04) + "s";
+    a.innerHTML = `
+      <div class="conv-avatar-wrap">
+        <div class="conv-avatar" style="background:${convPalettes[i % convPalettes.length]}">${ini(c.label)}</div>
+        <div class="conv-badge" id="badge-${c.conversation_id}"></div>
+      </div>
+      <div class="conv-info">
+        <div class="conv-name">${c.label}</div>
+        <div class="conv-preview" id="preview-${c.conversation_id}">Appuyer pour ouvrir</div>
+      </div>
+      <span class="conv-arrow">›</span>`;
+    box.appendChild(a);
+  });
+}
+
+function filterConv() {
+  const q = document.getElementById("search-input").value.toLowerCase().trim();
+  renderConvs(q ? allConvs.filter(c => c.label.toLowerCase().includes(q)) : allConvs);
+}
+
+/* ─── RECEIVED REQUESTS ─── */
+async function loadRequests() {
+  try {
+    const r = await fetch("/api/received-requests/?username="+encodeURIComponent(username));
+    const d = await r.json();
+    const list = document.getElementById("req-list");
+    list.innerHTML = "";
+    document.getElementById("msg-req").textContent = "";
+    if (!d.requests?.length) {
+      document.getElementById("no-req").style.display = "block";
+      document.getElementById("badge-requests").style.display = "none";
+      return;
+    }
+    document.getElementById("no-req").style.display = "none";
+    const badge = document.getElementById("badge-requests");
+    badge.style.display = "flex"; badge.textContent = d.requests.length;
+    d.requests.forEach(u => {
+      const li = document.createElement("li");
+      li.className = "modal-item";
+      li.innerHTML = `<div class="modal-avatar">${ini(u.username)}</div><span class="modal-name">${u.username}</span><button class="btn-accept" onclick="acceptInv('${u.username}')">Accepter</button>`;
+      list.appendChild(li);
+    });
+  } catch(e) { console.error(e); }
+}
+
+async function acceptInv(sender) {
+  try {
+    const r = await fetch("/api/accept-friend-request/", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({current_username:username, sender_username:sender}) });
+    const d = await r.json();
+    document.getElementById("msg-req").textContent = d.message||d.error||"";
+    loadRequests(); loadFriends(); loadConversations();
+  } catch { document.getElementById("msg-req").textContent = "Erreur serveur"; }
+}
+
+/* ─── AVAILABLE USERS ─── */
+async function loadAvailableUsers() {
+  try {
+    const r = await fetch("/api/available-users/?username="+encodeURIComponent(username));
+    const d = await r.json();
+    const list = document.getElementById("avail-list");
+    list.innerHTML = "";
+    document.getElementById("msg-inv").textContent = "";
+    if (!d.users?.length) { document.getElementById("no-avail").style.display="block"; return; }
+    document.getElementById("no-avail").style.display = "none";
+    d.users.forEach(u => {
+      const li = document.createElement("li");
+      li.className = "modal-item";
+      li.innerHTML = `<div class="modal-avatar">${ini(u.username)}</div><span class="modal-name">${u.username}</span><button class="btn-inv" id="ib-${u.username}" onclick="sendInv('${u.username}')">Inviter</button>`;
+      list.appendChild(li);
+    });
+  } catch(e) { console.error(e); }
+}
+
+async function sendInv(target) {
+  const btn = document.getElementById("ib-"+target);
+  if (btn) { btn.disabled=true; btn.textContent="Envoyé ✓"; }
+  try {
+    const r = await fetch("/api/send-friend-request/", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({sender_username:username, receiver_username:target}) });
+    const d = await r.json();
+    document.getElementById("msg-inv").textContent = d.message||d.error||"";
+  } catch { document.getElementById("msg-inv").textContent = "Erreur serveur"; }
+}
+
+/* ─── NOTIFICATIONS WEBSOCKET ─── */
+function connectNotifications() {
+  allConvs.forEach(conv => {
+    const socket = new WebSocket('ws://' + window.location.host + '/ws/chat/' + conv.conversation_id + '/');
+    socket.onmessage = function(e) {
+      const data = JSON.parse(e.data);
+      if (data.sender !== username) {
+        const badge = document.getElementById(`badge-${conv.conversation_id}`);
+        if (badge) badge.style.display = "block";
+        const preview = document.getElementById(`preview-${conv.conversation_id}`);
+        if (preview) {
+          preview.textContent = "Nouveau message : " + (data.message || data.text || "...");
+          document.getElementById(`conv-${conv.conversation_id}`)?.classList.add('unread');
+        }
+        if (Notification.permission === "granted") {
+          new Notification("Nouveau message de " + data.sender, { body: data.message });
+        }
       }
-      document.getElementById("no-req").style.display = "none";
-      const badge = document.getElementById("badge-requests");
-      badge.style.display = "flex"; badge.textContent = d.requests.length;
-      d.requests.forEach(u => {
-        const li = document.createElement("li");
-        li.className = "modal-item";
-        li.innerHTML = `<div class="modal-avatar">${ini(u.username)}</div><span class="modal-name">${u.username}</span><button class="btn-accept" onclick="acceptInv('${u.username}')">Accepter</button>`;
-        list.appendChild(li);
-      });
-    } catch(e) { console.error(e); }
-  }
+    };
+  });
+}
 
-  async function acceptInv(sender) {
-    try {
-      const r = await fetch("/api/accept-friend-request/", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({current_username:username, sender_username:sender}) });
-      const d = await r.json();
-      document.getElementById("msg-req").textContent = d.message||d.error||"";
-      loadRequests(); loadOnlineFriends(); loadConversations();
-    } catch { document.getElementById("msg-req").textContent = "Erreur serveur"; }
-  }
+/* ─── INIT ─── */
+loadFriends();
 
-  /* ─── AVAILABLE USERS ─── */
-  async function loadAvailableUsers() {
-    try {
-      const r = await fetch("/api/available-users/?username="+encodeURIComponent(username));
-      const d = await r.json();
-      const list = document.getElementById("avail-list");
-      list.innerHTML = "";
-      document.getElementById("msg-inv").textContent = "";
-      if (!d.users?.length) { document.getElementById("no-avail").style.display="block"; return; }
-      document.getElementById("no-avail").style.display = "none";
-      d.users.forEach(u => {
-        const li = document.createElement("li");
-        li.className = "modal-item";
-        li.innerHTML = `<div class="modal-avatar">${ini(u.username)}</div><span class="modal-name">${u.username}</span><button class="btn-inv" id="ib-${u.username}" onclick="sendInv('${u.username}')">Inviter</button>`;
-        list.appendChild(li);
-      });
-    } catch(e) { console.error(e); }
-  }
+(async () => {
+  try {
+    const r = await fetch("/api/received-requests/?username="+encodeURIComponent(username));
+    const d = await r.json();
+    if (d.requests?.length) {
+      const b = document.getElementById("badge-requests");
+      b.style.display="flex"; b.textContent=d.requests.length;
+    }
+  } catch {}
+})();
 
-  async function sendInv(target) {
-    const btn = document.getElementById("ib-"+target);
-    if (btn) { btn.disabled=true; btn.textContent="Envoyé ✓"; }
-    try {
-      const r = await fetch("/api/send-friend-request/", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({sender_username:username, receiver_username:target}) });
-      const d = await r.json();
-      document.getElementById("msg-inv").textContent = d.message||d.error||"";
-    } catch { document.getElementById("msg-inv").textContent = "Erreur serveur"; }
-  }
+loadConversations().then(() => { connectNotifications(); });
 
-  /* ─── INIT ─── */
-  loadOnlineFriends();
-  loadConversations();
-  (async () => {
-    try {
-      const r = await fetch("/api/received-requests/?username="+encodeURIComponent(username));
-      const d = await r.json();
-      if (d.requests?.length) {
-        const b = document.getElementById("badge-requests");
-        b.style.display="flex"; b.textContent=d.requests.length;
+/* ─── CRÉER UN GROUPE ─── */
+const groupPalettes = [
+  "linear-gradient(135deg,#a78bfa,#60a5fa)",
+  "linear-gradient(135deg,#f472b6,#fb923c)",
+  "linear-gradient(135deg,#34d399,#22d3ee)",
+  "linear-gradient(135deg,#60a5fa,#818cf8)",
+  "linear-gradient(135deg,#fb923c,#f43f5e)"
+];
+
+async function loadFriendsForGroup() {
+  const container = document.getElementById("friends-checkboxes");
+  container.innerHTML = "<div style='padding:12px 18px;color:var(--sub);font-size:13px;'>Chargement…</div>";
+  document.getElementById("msg-group-text").textContent = "";
+
+  try {
+    const r  = await fetch("/api/friends/?username=" + encodeURIComponent(username));
+    const d  = await r.json();
+    const r2 = await fetch("/api/conversations/?username=" + encodeURIComponent(username));
+    const d2 = await r2.json();
+
+    container.innerHTML = "";
+
+    const friends = [];
+    const seenNames = new Set();
+    (d2.conversations || []).forEach(conv => {
+      if (!conv.is_group) {
+        const name = conv.label;
+        if (name && !seenNames.has(name)) {
+          seenNames.add(name);
+          friends.push({ username: name, online: false });
+        }
       }
-    } catch {}
-  })();
+    });
+    (d.friends || []).forEach(f => {
+      const found = friends.find(fr => fr.username === f.username);
+      if (found) found.online = f.online;
+    });
+
+    if (!friends.length) {
+      document.getElementById("no-friends-group").style.display = "block";
+      return;
+    }
+    document.getElementById("no-friends-group").style.display = "none";
+
+    friends.forEach((f, i) => {
+      const item = document.createElement("div");
+      item.className = "group-check-item";
+      item.dataset.username = f.username;
+
+      item.innerHTML = `
+        <div class="g-avatar" style="background:${groupPalettes[i % groupPalettes.length]}">${ini(f.username)}</div>
+        <div class="g-info">
+          <div class="g-name">${f.username}</div>
+          <div class="g-status ${f.online ? 'online' : ''}">${f.online ? '● En ligne' : '● Hors ligne'}</div>
+        </div>
+        <div class="g-check">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>`;
+
+      item.addEventListener("click", () => {
+        item.classList.toggle("selected");
+      });
+
+      container.appendChild(item);
+    });
+  } catch(e) {
+    console.error(e);
+    container.innerHTML = "<div style='padding:12px 18px;color:var(--red);font-size:13px;'>Erreur de chargement</div>";
+  }
+}
+
+async function createGroup() {
+  const groupName    = document.getElementById("group-name-input").value.trim();
+  const selected     = document.querySelectorAll("#friends-checkboxes .group-check-item.selected");
+  const participants = Array.from(selected).map(el => el.dataset.username);
+  const msgEl        = document.getElementById("msg-group-text");
+  const btn          = document.getElementById("btn-create-group");
+
+  if (!groupName) { msgEl.style.color = "var(--red)"; msgEl.textContent = "Donne un nom au groupe !"; return; }
+  if (!participants.length) { msgEl.style.color = "var(--red)"; msgEl.textContent = "Sélectionne au moins un ami !"; return; }
+
+  btn.disabled = true; btn.textContent = "Création…";
+  try {
+    const res  = await fetch("/api/create-group/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ creator: username, participants, group_name: groupName })
+    });
+    const data = await res.json();
+    if (data.success) {
+      closeModal("modal-group");
+      await loadConversations();
+      window.location.href = "/chat/" + data.conversation_id + "/?username=" + encodeURIComponent(username);
+    } else {
+      msgEl.style.color = "var(--red)"; msgEl.textContent = data.error || "Erreur création";
+      btn.disabled = false; btn.textContent = "Créer le groupe";
+    }
+  } catch(e) {
+    msgEl.style.color = "var(--red)"; msgEl.textContent = "Erreur serveur";
+    btn.disabled = false; btn.textContent = "Créer le groupe";
+  }
+}
 </script>
 </body>
 </html>

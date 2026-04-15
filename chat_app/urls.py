@@ -1,4 +1,6 @@
 from django.urls import path
+
+from chat_app.page_views import admin_dashboard_view
 from .views import (
     register_view,
     login_view,
@@ -11,6 +13,9 @@ from .views import (
     send_friend_request_view,
     received_requests_view,
     accept_friend_request_view,
+    get_friends,
+    create_group_view,
+    admin_stats_api,
 )
 
 urlpatterns = [
@@ -26,4 +31,7 @@ urlpatterns = [
     path("send-friend-request/", send_friend_request_view),
     path("received-requests/", received_requests_view),
     path("accept-friend-request/", accept_friend_request_view),
+    path("friends/", get_friends, name="get_friends"),
+    path("create-group/", create_group_view),
+    path("admin-stats/", admin_stats_api),
 ]

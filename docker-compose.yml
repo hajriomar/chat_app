@@ -18,6 +18,9 @@ services:
     container_name: chat_redis
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
+
 
   mongo1:
     image: mongo:8
@@ -50,3 +53,4 @@ volumes:
   mongo1_data:
   mongo2_data:
   mongo3_data:
+  redis_data:

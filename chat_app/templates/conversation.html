@@ -2,6 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+<<<<<<< HEAD
     <title>Conversation</title>
     <style>
         body {
@@ -98,10 +99,257 @@
             padding: 8px 14px;
             border-radius: 8px;
             text-decoration: none;
+=======
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - {{ conversation_id }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent: #0a84ff;
+            --accent-hover: #0073e6;
+            --bg: #f8f9fb;
+            --white: #ffffff;
+            --text: #111827;
+            --sub: #6b7280;
+            --border: #e5e7eb;
+            --red: #ef4444;
+            --nav-h: 62px;
+            --radius-msg: 18px;
+            --sent-bg: linear-gradient(135deg, #0084ff, #0073e6);
+            --received-bg: #e4e6eb;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .navbar {
+            height: var(--nav-h);
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            text-decoration: none;
+        }
+
+        .nav-logo-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            color: white;
+        }
+
+        .nav-logo-text {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .nav-spacer { flex: 1; }
+
+        .nav-user {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 10px 5px 6px;
+            border-radius: 30px;
+            background: #f5f6f8;
+        }
+
+        .nav-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: white;
+            font-size: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-transform: uppercase;
+        }
+
+        .nav-username {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .btn-logout {
+            border: none;
+            background: none;
+            color: var(--red);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 7px 14px;
+            border-radius: 8px;
+        }
+
+        .chat-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 720px;
+            margin: 0 auto;
+            background: var(--white);
+            border-left: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            height: calc(100vh - var(--nav-h));
+            overflow: hidden;
+        }
+
+        .chat-header {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            flex-shrink: 0;
+        }
+
+        .header-info {
+            margin-left: 12px;
+        }
+
+        .header-info h2 {
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .header-info span {
+            font-size: 11px;
+            color: var(--sub);
+        }
+
+        #chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            background: var(--bg);
+        }
+
+        .message {
+            max-width: 75%;
+            padding: 10px 14px;
+            font-size: 14.5px;
+            line-height: 1.5;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            animation: messageSlide 0.3s ease-out;
+        }
+
+        @keyframes messageSlide {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .sent {
+            align-self: flex-end;
+            background: var(--sent-bg);
+            color: white;
+            border-radius: var(--radius-msg) var(--radius-msg) 2px var(--radius-msg);
+        }
+
+        .received {
+            align-self: flex-start;
+            background: var(--received-bg);
+            color: var(--text);
+            border-radius: var(--radius-msg) var(--radius-msg) var(--radius-msg) 2px;
+        }
+
+        .sender-name {
+            font-size: 10px;
+            font-weight: 700;
+            opacity: 0.6;
+            margin-bottom: 2px;
+            display: block;
+        }
+
+        .input-area {
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--white);
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            background: #f0f2f5;
+            border-radius: 24px;
+            padding: 2px 16px;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            padding: 10px 0;
+            border: none;
+            background: transparent;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .input-area button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+
+        .avatar-circle {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: var(--sent-bg);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+>>>>>>> mariem
         }
     </style>
 </head>
 <body>
+<<<<<<< HEAD
     <div class="topbar">
         <div>Chat temps réel</div>
         <a class="back-btn" href="/home/?username={{ username }}">Retour</a>
@@ -118,9 +366,52 @@
         </div>
     </div>
 
+=======
+    <nav class="navbar">
+        <a href="#" id="logo-link" class="nav-logo" style="text-decoration: none; cursor: pointer;">
+            <div class="nav-logo-icon">💬</div>
+            <span class="nav-logo-text">ChatApp</span>
+        </a>
+
+        <div class="nav-spacer"></div>
+
+        <div class="nav-user">
+            <div class="nav-avatar" id="nav-letter">?</div>
+            <span class="nav-username" id="nav-name">...</span>
+        </div>
+        <button class="btn-logout" id="logout-btn">Déconnexion</button>
+    </nav>
+
+    <div class="chat-wrapper">
+        <header class="chat-header">
+            <div class="avatar-circle" id="header-avatar">?</div>
+            <div class="header-info">
+                <h2 id="display-name">Conversation</h2>
+                <span id="session-id">Chargement...</span>
+            </div>
+        </header>
+
+        <div id="chat-container">
+            <div id="history-data" style="display:none;">{{ history }}</div>
+        </div>
+
+        <div class="input-area">
+            <div class="input-wrapper">
+                <input id="chat-message-input" type="text" placeholder="Aa" autocomplete="off">
+            </div>
+            <button id="chat-message-submit" disabled title="Envoyer">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                    <path d="M1.101 21.757L23.8 12.028 1.101 2.3l.011 7.912 13.623 1.816-13.623 1.817-.011 7.912z" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+>>>>>>> mariem
     <script>
         const username = "{{ username }}";
         const conversationId = "{{ conversation_id }}";
+<<<<<<< HEAD
 
         const messagesArea = document.getElementById("messages-area");
         const messageInput = document.getElementById("message-input");
@@ -199,6 +490,141 @@
         });
 
         loadOldMessages();
+=======
+        const params = new URLSearchParams(window.location.search);
+        const username = params.get("username") || "Anonyme";
+        const convLabel = params.get("label") || "Conversation";
+        const isGroup = params.get("is_group") === "1";
+        const chatContainer = document.querySelector('#chat-container');
+        const submitBtn = document.querySelector('#chat-message-submit');
+
+        document.getElementById("nav-name").textContent = username;
+        document.getElementById("nav-letter").textContent = username.charAt(0).toUpperCase();
+
+        document.getElementById("session-id").textContent = "ID Session : " + conversationId;
+        document.getElementById("header-avatar").textContent = isGroup ? "👥" : convLabel.charAt(0).toUpperCase();
+        document.getElementById("display-name").textContent = isGroup ? convLabel : "Chat avec " + convLabel;
+        document.title = isGroup ? convLabel : "Chat avec " + convLabel;
+
+        if (window.Notification && Notification.permission !== "granted") {
+            Notification.requestPermission();
+        }
+
+        function addMessageBubble(sender, message) {
+            if (!message || message.trim() === "") return;
+
+            const msgDiv = document.createElement('div');
+            const isMe = sender.trim() === username.trim();
+
+            msgDiv.classList.add('message');
+            msgDiv.classList.add(isMe ? 'sent' : 'received');
+            msgDiv.innerHTML = `<span class="sender-name">${sender}</span>${message}`;
+
+            chatContainer.appendChild(msgDiv);
+
+            chatContainer.scrollTo({
+                top: chatContainer.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+
+        const historyDataElem = document.getElementById('history-data');
+        const historyData = historyDataElem ? historyDataElem.textContent : "";
+        chatContainer.innerHTML = '';
+
+        if (historyData && historyData.trim() !== "") {
+            const lines = historyData.split('\n');
+            lines.forEach(line => {
+                if (line.includes(':')) {
+                    const firstColonIndex = line.indexOf(':');
+                    const s = line.substring(0, firstColonIndex).trim();
+                    const m = line.substring(firstColonIndex + 1).trim();
+                    if (s && m) addMessageBubble(s, m);
+                }
+            });
+        }
+
+        const protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
+        const chatSocket = new WebSocket(protocol + window.location.host + '/ws/chat/' + conversationId + '/');
+
+        chatSocket.onopen = function() {
+            console.log("Connecté au serveur !");
+            submitBtn.disabled = false;
+        };
+
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            const isMe = data.sender.trim() === username.trim();
+
+            if (!isMe && document.hidden) {
+                if (Notification.permission === "granted") {
+                    const notification = new Notification("Nouveau message", {
+                        body: data.sender + ": " + (data.message || data.text)
+                    });
+
+                    notification.onclick = function() {
+                        window.focus();
+                        this.close();
+                    };
+                }
+
+                document.title = "🔔 Nouveau message !";
+            }
+
+            addMessageBubble(data.sender, (data.message || data.text));
+        };
+
+        window.onfocus = function() {
+            document.title = isGroup ? convLabel : "Chat avec " + convLabel;
+        };
+
+        chatSocket.onclose = () => {
+            console.warn("Connexion fermée.");
+            submitBtn.disabled = true;
+        };
+
+        chatSocket.onerror = (e) => console.error("Erreur WebSocket", e);
+
+        submitBtn.onclick = function() {
+            const input = document.querySelector('#chat-message-input');
+            const message = input.value;
+
+            if (chatSocket.readyState === WebSocket.OPEN && message.trim() !== "") {
+                chatSocket.send(JSON.stringify({
+                    message: message,
+                    sender: username
+                }));
+                input.value = '';
+            }
+        };
+
+        document.querySelector('#chat-message-input').onkeyup = (e) => {
+            if (e.key === "Enter") submitBtn.click();
+        };
+
+        document.getElementById("logout-btn").addEventListener("click", async () => {
+            try {
+                const r = await fetch("/api/logout/", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username })
+                });
+
+                const d = await r.json();
+
+                if (r.ok) {
+                    alert(d.message || "Déconnexion réussie");
+                    window.location.href = "/";
+                } else {
+                    alert(d.error || "Erreur");
+                }
+            } catch {
+                alert("Erreur serveur");
+            }
+        });
+
+        document.getElementById("logo-link").href = "/home/?username=" + encodeURIComponent(username);
+>>>>>>> mariem
     </script>
 </body>
 </html>
