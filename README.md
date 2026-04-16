@@ -1,11 +1,3 @@
-<<<<<<< HEAD
-# chat_app
-Dans le cmd : docker compose up --build
-Dans un autre cmd en parallele: docker exec -it mongo1 mongosh
-Entrer ca dans le > ou test affiché sur le cmd :
- rs.initiate({
-  _id: "rs0", // Utilise bien le nom du replSet de ton docker-compose
-=======
 # Chat App
 
 ## Lancer les conteneurs
@@ -81,5 +73,3 @@ Arrêter les conteneurs :
 docker compose down
 ```
 
-
->>>>>>> 4ebb6baac4b83f504d58e7558792853a028495e0
